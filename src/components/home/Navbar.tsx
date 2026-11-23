@@ -15,6 +15,11 @@ import {
   ShieldCheck,
   LogOut,
   ArrowRight,
+  CreditCard,
+  ArrowRightLeft,
+  Receipt,
+  Banknote,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 type UserRole = 'Admin' | 'Bank Staff' | 'Customer';
@@ -23,6 +28,7 @@ interface NavUser {
   name: string;
   email: string;
   role: UserRole;
+  image?: string | null;
 }
 
 interface NavbarProps {
@@ -64,8 +70,18 @@ const Navbar: React.FC<NavbarProps> = ({ user: propUser = null, onLogout }) => {
           name: session.user.name || 'User',
           email: session.user.email || '',
           role: (session.user.role as UserRole) || 'Customer',
+          image: session.user.image || null,
         }
       : null);
+
+  const getInitials = (name?: string) => {
+    if (!name || !name.trim()) return 'US';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
 
   const handleLogout = async () => {
     if (onLogout) {
@@ -216,56 +232,155 @@ const Navbar: React.FC<NavbarProps> = ({ user: propUser = null, onLogout }) => {
             </Link>
           )}
 
-          {/* Circular Dark User Icon Button (Matches Image) */}
+          {/* Circular User Avatar / Initials Button (Per Requirement) */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setProfileMenuOpen(prev => !prev)}
               aria-label="Account Menu"
-              className="flex hover:cursor-pointer h-10 w-10 items-center justify-center rounded-full bg-[#071121] text-white shadow-sm transition hover:opacity-90 dark:bg-slate-800 dark:ring-1 dark:ring-slate-700"
+              className="group flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ring-2 ring-slate-200 transition hover:ring-emerald-500 focus:outline-hidden dark:ring-slate-800 dark:hover:ring-emerald-500"
             >
-              <User className="h-4 w-4" />
+              {user ? (
+                user.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.image}
+                    alt={user.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0b162c] to-[#043320] text-xs font-bold uppercase tracking-wider text-emerald-300 dark:from-emerald-950 dark:to-slate-900 dark:text-emerald-400">
+                    {getInitials(user.name)}
+                  </div>
+                )
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[#071121] text-white dark:bg-slate-800">
+                  <User className="h-4 w-4" />
+                </div>
+              )}
             </button>
 
             {/* Dropdown Menu for Quick Role/Auth Navigation */}
             {profileMenuOpen && (
               <div
                 onMouseLeave={() => setProfileMenuOpen(false)}
-                className="absolute right-0 mt-2 w-60 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+                className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
               >
                 {user ? (
                   <>
-                    <div className="border-b border-slate-100 px-3 py-2.5 dark:border-slate-800">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                        {user.name}
-                      </p>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {user.email}
-                      </p>
-                      <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                        <ShieldCheck className="h-3 w-3" />
-                        {user.role}
-                      </span>
+                    <div className="flex items-center gap-3 border-b border-slate-100 px-3 py-3 dark:border-slate-800">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-xs font-bold text-emerald-700 dark:bg-slate-800 dark:text-emerald-400">
+                        {user.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={user.image}
+                            alt={user.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          getInitials(user.name)
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                          {user.name}
+                        </p>
+                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                          {user.email}
+                        </p>
+                        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300">
+                          <ShieldCheck className="h-3 w-3" />
+                          {user.role}
+                        </span>
+                      </div>
                     </div>
-                    <Link
-                      href={getDashboardHref(user.role)}
-                      onClick={() => setProfileMenuOpen(false)}
-                      className="mt-1 flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                    >
-                      <LayoutDashboard className="h-4 w-4" />
-                      Go to Dashboard
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileMenuOpen(false);
-                        handleLogout();
-                      }}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Sign Out
-                    </button>
+
+                    {/* Dedicated Customer Dashboard Navlink & Shortcuts */}
+                    {user.role === 'Customer' ? (
+                      <div className="space-y-0.5 py-1.5">
+                        <Link
+                          href="/dashboard/customer"
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="flex items-center justify-between rounded-xl bg-emerald-50/70 px-3 py-2 text-xs font-bold text-emerald-800 transition hover:bg-emerald-100/70 dark:bg-emerald-950/50 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                        >
+                          <span className="flex items-center gap-2">
+                            <LayoutDashboard className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            Customer Dashboard
+                          </span>
+                          <ArrowRight className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        </Link>
+
+                        <Link
+                          href="/dashboard/customer/accounts"
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                        >
+                          <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+                          My Accounts
+                        </Link>
+
+                        <Link
+                          href="/dashboard/customer/transfer"
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                        >
+                          <ArrowRightLeft className="h-3.5 w-3.5 text-slate-400" />
+                          Fund Transfer
+                        </Link>
+
+                        <Link
+                          href="/dashboard/customer/transactions"
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                        >
+                          <Receipt className="h-3.5 w-3.5 text-slate-400" />
+                          Transaction History
+                        </Link>
+
+                        <Link
+                          href="/dashboard/customer/deposit-withdraw"
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                        >
+                          <Banknote className="h-3.5 w-3.5 text-slate-400" />
+                          Deposit & Withdraw
+                        </Link>
+
+                        <Link
+                          href="/dashboard/customer/loans"
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                        >
+                          <FileSpreadsheet className="h-3.5 w-3.5 text-slate-400" />
+                          Loans & Repayments
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="py-1">
+                        <Link
+                          href={getDashboardHref(user.role)}
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                        >
+                          <LayoutDashboard className="h-4 w-4" />
+                          Go to Dashboard ({user.role})
+                        </Link>
+                      </div>
+                    )}
+
+                    <div className="border-t border-slate-100 pt-1 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                      >
+                        <LogOut className="h-3.5 w-3.5" />
+                        Sign Out
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <div className="space-y-1 p-1">
@@ -373,6 +488,29 @@ const Navbar: React.FC<NavbarProps> = ({ user: propUser = null, onLogout }) => {
               </>
             ) : (
               <>
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-xs font-bold text-emerald-800 dark:bg-slate-800 dark:text-emerald-400">
+                    {user.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={user.image}
+                        alt={user.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      getInitials(user.name)
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                      {user.name}
+                    </p>
+                    <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+
                 <Link
                   href={getDashboardHref(user.role)}
                   onClick={() => setMobileMenuOpen(false)}
@@ -380,6 +518,40 @@ const Navbar: React.FC<NavbarProps> = ({ user: propUser = null, onLogout }) => {
                 >
                   Dashboard ({user.role})
                 </Link>
+
+                {user.role === 'Customer' && (
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <Link
+                      href="/dashboard/customer/accounts"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="rounded-xl border border-slate-200 bg-white py-2 text-center text-xs font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                    >
+                      Accounts
+                    </Link>
+                    <Link
+                      href="/dashboard/customer/transfer"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="rounded-xl border border-slate-200 bg-white py-2 text-center text-xs font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                    >
+                      Transfer
+                    </Link>
+                    <Link
+                      href="/dashboard/customer/transactions"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="rounded-xl border border-slate-200 bg-white py-2 text-center text-xs font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                    >
+                      Transactions
+                    </Link>
+                    <Link
+                      href="/dashboard/customer/loans"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="rounded-xl border border-slate-200 bg-white py-2 text-center text-xs font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                    >
+                      Loans
+                    </Link>
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={() => {

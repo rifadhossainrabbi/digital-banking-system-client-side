@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import AuthProvider from '@/components/AuthProvider';
+import ReduxProvider from '@/redux/ReduxProvider';
 import Navbar from '@/components/home/Navbar';
 import Footer from '@/components/home/Footer';
 
@@ -36,9 +37,11 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
         <ThemeProvider>
           <AuthProvider>
-            <Navbar />
-            <main className="flex-grow w-full">{children}</main>
-            <Footer />
+            <ReduxProvider>
+              <Navbar />
+              <main className="flex-grow w-full">{children}</main>
+              <Footer />
+            </ReduxProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
