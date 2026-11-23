@@ -71,7 +71,7 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
     ).matches;
 
     if (prefersReducedMotion) {
-      setCount(target);
+      requestAnimationFrame(() => setCount(target));
       return;
     }
 

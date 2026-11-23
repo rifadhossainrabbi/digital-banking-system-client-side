@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import { useSession, signOut } from 'next-auth/react';
 import {
   User,
   Sun,
@@ -37,18 +38,44 @@ const navLinks = [
   { label: 'Contact', href: '/#contact' },
 ];
 
-const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout }) => {
+const emptySubscribe = () => () => {};
+function useMounted() {
+  return React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
+
+const Navbar: React.FC<NavbarProps> = ({ user: propUser = null, onLogout }) => {
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
+  const { data: session } = useSession();
 
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
-  // Hydration mismatch এড়ানোর জন্য mount চেক
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Active user from session or prop
+  const user: NavUser | null =
+    propUser ||
+    (session?.user
+      ? {
+          name: session.user.name || 'User',
+          email: session.user.email || '',
+          role: (session.user.role as UserRole) || 'Customer',
+        }
+      : null);
+
+  const handleLogout = async () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      await signOut({ callbackUrl: '/login' });
+    }
+  };
+
+
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
@@ -195,7 +222,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout }) => {
               type="button"
               onClick={() => setProfileMenuOpen(prev => !prev)}
               aria-label="Account Menu"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#071121] text-white shadow-sm transition hover:opacity-90 dark:bg-slate-800 dark:ring-1 dark:ring-slate-700"
+              className="flex hover:cursor-pointer h-10 w-10 items-center justify-center rounded-full bg-[#071121] text-white shadow-sm transition hover:opacity-90 dark:bg-slate-800 dark:ring-1 dark:ring-slate-700"
             >
               <User className="h-4 w-4" />
             </button>
@@ -232,7 +259,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout }) => {
                       type="button"
                       onClick={() => {
                         setProfileMenuOpen(false);
-                        onLogout?.();
+                        handleLogout();
                       }}
                       className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
                     >
@@ -357,7 +384,7 @@ const Navbar: React.FC<NavbarProps> = ({ user = null, onLogout }) => {
                   type="button"
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    onLogout?.();
+                    handleLogout();
                   }}
                   className="w-full rounded-xl border border-rose-200 py-2.5 text-center text-sm font-semibold text-rose-600 dark:border-rose-900 dark:text-rose-400"
                 >
