@@ -140,6 +140,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (!email) return false;
 
           const existingUser = await db.collection('users').findOne({ email });
+
+          let chosenAccountType = 'Savings Account';
+          try {
+            const { cookies } = await import('next/headers');
+            const cookieStore = await cookies();
+            const cType = cookieStore.get('vaultly_account_type')?.value;
+            if (
+              cType &&
+              ['Savings Account', 'Current Account', 'Business Account'].includes(cType)
+            ) {
+              chosenAccountType = cType;
+            }
+          } catch {
+            // fallback to Savings Account
+          }
+
+          const limits =
+            chosenAccountType === 'Business Account'
+              ? { dailyLimit: 50000, maxSingleTransaction: 20000, minBalance: 500 }
+              : chosenAccountType === 'Current Account'
+              ? { dailyLimit: 15000, maxSingleTransaction: 5000, minBalance: 100 }
+              : { dailyLimit: 5000, maxSingleTransaction: 2000, minBalance: 50 };
+
           if (!existingUser) {
             // New Google user gets Customer role and Active status
             const insertRes = await db.collection('users').insertOne({
@@ -147,6 +170,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               email,
               image: user.image || null,
               role: 'Customer',
+              accountType: chosenAccountType,
               status: 'Active',
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -160,12 +184,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               userEmail: email,
               userName: user.name || 'Google Customer',
               accountNumber,
-              accountType: 'Savings Account',
+              accountType: chosenAccountType,
               balance: 1000.0,
               status: 'Active',
-              dailyLimit: 5000,
-              maxSingleTransaction: 2000,
-              minBalance: 50,
+              ...limits,
               createdAt: new Date(),
               updatedAt: new Date(),
             });
@@ -182,12 +204,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 userEmail: email,
                 userName: existingUser.name || user.name || 'Customer',
                 accountNumber,
-                accountType: existingUser.accountType || 'Savings Account',
+                accountType: existingUser.accountType || chosenAccountType,
                 balance: 1000.0,
                 status: 'Active',
-                dailyLimit: 5000,
-                maxSingleTransaction: 2000,
-                minBalance: 50,
+                ...limits,
                 createdAt: new Date(),
                 updatedAt: new Date(),
               });

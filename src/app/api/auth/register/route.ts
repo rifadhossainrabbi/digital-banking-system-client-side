@@ -5,10 +5,12 @@ import { getDatabase } from '@/lib/db';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { role, fullName, name, email, password } = body;
+    const { role, fullName, name, email, password, accountType = 'Savings Account' } = body;
 
     const userName = (fullName || name || '').trim();
     const trimmedEmail = (email || '').trim().toLowerCase();
+    const validAccountTypes = ['Savings Account', 'Current Account', 'Business Account'];
+    const chosenAccountType = validAccountTypes.includes(accountType) ? accountType : 'Savings Account';
 
     // 1. Basic validation (Only Name, Email, Password, Role)
     if (!userName || !trimmedEmail || !password) {
@@ -56,6 +58,7 @@ export async function POST(req: Request) {
         image: null,
         password: hashedPassword,
         role: 'Customer',
+        accountType: chosenAccountType,
         status: 'Active',
         createdAt: now,
         updatedAt: now,
@@ -65,18 +68,23 @@ export async function POST(req: Request) {
       const accountNumber =
         '10' + Math.floor(10000000 + Math.random() * 90000000);
 
-      // Create initial Savings Account with $1,000 welcome opening deposit
+      const limits =
+        chosenAccountType === 'Business Account'
+          ? { dailyLimit: 50000, maxSingleTransaction: 20000, minBalance: 500 }
+          : chosenAccountType === 'Current Account'
+          ? { dailyLimit: 15000, maxSingleTransaction: 5000, minBalance: 100 }
+          : { dailyLimit: 5000, maxSingleTransaction: 2000, minBalance: 50 };
+
+      // Create initial Account with $1,000 welcome opening deposit
       await db.collection('bank_accounts').insertOne({
         userId: userResult.insertedId.toString(),
         userEmail: trimmedEmail,
         userName,
         accountNumber,
-        accountType: 'Savings Account',
+        accountType: chosenAccountType,
         balance: 1000.0,
         status: 'Active',
-        dailyLimit: 5000,
-        maxSingleTransaction: 2000,
-        minBalance: 50,
+        ...limits,
         createdAt: now,
         updatedAt: now,
       });
