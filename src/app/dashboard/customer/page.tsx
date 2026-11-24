@@ -2,6 +2,7 @@
 
 import React, { Suspense, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   Wallet,
   ArrowUpRight,
@@ -17,9 +18,22 @@ import {
   EyeOff,
 } from 'lucide-react';
 import { useAppSelector } from '@/redux/hooks';
-import CustomerCharts from '@/components/customer/CustomerCharts';
-import TransactionReceiptModal from '@/components/customer/TransactionReceiptModal';
 import { Transaction } from '@/redux/slices/transactionSlice';
+
+// Lazy loaded heavy client components
+const CustomerCharts = dynamic(() => import('@/components/customer/CustomerCharts'), {
+  loading: () => (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="h-[360px] animate-pulse rounded-3xl bg-slate-100 p-6 lg:col-span-2 dark:bg-slate-900" />
+      <div className="h-[360px] animate-pulse rounded-3xl bg-slate-100 p-6 dark:bg-slate-900" />
+    </div>
+  ),
+});
+
+const TransactionReceiptModal = dynamic(
+  () => import('@/components/customer/TransactionReceiptModal'),
+  { ssr: false }
+);
 
 export default function CustomerDashboardOverview() {
   const { accounts, activeAccount } = useAppSelector(

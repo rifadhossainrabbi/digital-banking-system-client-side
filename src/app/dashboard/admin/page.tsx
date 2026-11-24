@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   Users,
   CreditCard,
@@ -15,7 +16,16 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { getAdminDashboardDataAction } from '@/actions/admin';
-import AdminCharts from '@/components/admin/AdminCharts';
+
+// Lazy load heavy analytics charts for performance optimization
+const AdminCharts = dynamic(() => import('@/components/admin/AdminCharts'), {
+  loading: () => (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="h-[380px] animate-pulse rounded-3xl bg-slate-100 p-6 lg:col-span-2 dark:bg-slate-900" />
+      <div className="h-[380px] animate-pulse rounded-3xl bg-slate-100 p-6 dark:bg-slate-900" />
+    </div>
+  ),
+});
 
 export const instant = false;
 

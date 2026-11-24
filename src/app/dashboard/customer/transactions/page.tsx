@@ -16,8 +16,13 @@ import {
   fetchTransactions,
   Transaction,
 } from '@/redux/slices/transactionSlice';
-import TransactionReceiptModal from '@/components/customer/TransactionReceiptModal';
+import dynamic from 'next/dynamic';
 import { generateAccountStatementPDF } from '@/utils/pdfGenerator';
+
+const TransactionReceiptModal = dynamic(
+  () => import('@/components/customer/TransactionReceiptModal'),
+  { ssr: false }
+);
 
 export default function CustomerTransactionsPage() {
   const dispatch = useAppDispatch();
