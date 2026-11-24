@@ -70,8 +70,8 @@ export default function AdminCharts({
   const loanPieData = React.useMemo(() => {
     if (!loanStats || loanStats.length === 0) {
       return [
-        { name: 'Active', value: 1, color: '#10b981' },
-        { name: 'Pending', value: 1, color: '#f59e0b' },
+        { name: 'Active', value: 1, color: '#10b981', totalAmount: 0 },
+        { name: 'Pending', value: 1, color: '#f59e0b', totalAmount: 0 },
       ];
     }
     return loanStats.map(item => ({
