@@ -8,28 +8,28 @@ const footerColumns = [
   {
     title: 'Platform',
     links: [
-      { label: 'Treasury Overview', href: '/#features' },
-      { label: 'Asset Management', href: '/#services' },
-      { label: 'Security Standards', href: '/#security' },
-      { label: 'Global Transfers', href: '/dashboard/customer' },
+      { label: 'Platform Features', href: '/features' },
+      { label: 'Banking Services', href: '/services' },
+      { label: 'About Vaultly', href: '/about' },
+      { label: 'Contact Support', href: '/contact' },
     ],
   },
   {
     title: 'Banking',
     links: [
-      { label: 'Private Accounts', href: '/dashboard/customer' },
-      { label: 'Commercial Vaults', href: '/#services' },
-      { label: 'High-Yield Reserves', href: '/#services' },
-      { label: 'Credit & Liquidity', href: '/dashboard/customer' },
+      { label: 'Savings Accounts', href: '/services' },
+      { label: 'Current Accounts', href: '/services' },
+      { label: 'Commercial Business', href: '/services' },
+      { label: 'Loans & EMI', href: '/dashboard/customer' },
     ],
   },
   {
     title: 'Support',
     links: [
-      { label: 'Help Center', href: '/#contact' },
-      { label: 'Concierge Desk', href: '/#contact' },
-      { label: 'API Documentation', href: '/#features' },
-      { label: 'System Status', href: '/#security' },
+      { label: 'Help & FAQ', href: '/contact' },
+      { label: 'Branch VLT-NYC-01', href: '/contact' },
+      { label: 'Security Pillars', href: '/about' },
+      { label: 'System Portal', href: '/login' },
     ],
   },
 ];

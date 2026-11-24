@@ -209,7 +209,7 @@ const Navbar: React.FC<NavbarProps> = ({ user: propUser = null, onLogout }) => {
               {/* Login Button */}
               <Link
                 href="/login"
-                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-[#071121] shadow-2xs transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+                className="btn-interactive inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-[#071121] shadow-2xs transition-all duration-200 hover:scale-[1.03] hover:border-slate-300 hover:bg-slate-50 hover:shadow-md active:scale-[0.98] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
               >
                 Login
               </Link>
@@ -217,7 +217,7 @@ const Navbar: React.FC<NavbarProps> = ({ user: propUser = null, onLogout }) => {
               {/* Get Started Button */}
               <Link
                 href="/register"
-                className="rounded-xl bg-[#022c1e] px-5 py-2.5 text-sm font-semibold text-[#34d399] shadow-sm transition hover:bg-[#033d2a] dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+                className="btn-interactive inline-flex items-center justify-center rounded-xl bg-[#022c1e] px-5 py-2.5 text-sm font-semibold text-[#34d399] shadow-sm transition-all duration-200 hover:scale-[1.03] hover:bg-[#033d2a] hover:shadow-md active:scale-[0.98] dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
               >
                 Get Started
               </Link>
@@ -225,7 +225,7 @@ const Navbar: React.FC<NavbarProps> = ({ user: propUser = null, onLogout }) => {
           ) : (
             <Link
               href={getDashboardHref(user.role)}
-              className="flex items-center gap-2 rounded-xl bg-[#022c1e] px-4 py-2.5 text-sm font-semibold text-[#34d399] shadow-sm transition hover:bg-[#033d2a] dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+              className="btn-interactive inline-flex items-center gap-2 rounded-xl bg-[#022c1e] px-4 py-2.5 text-sm font-semibold text-[#34d399] shadow-sm transition-all duration-200 hover:scale-[1.03] hover:bg-[#033d2a] hover:shadow-md active:scale-[0.98] dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
             >
               <LayoutDashboard className="h-4 w-4" />
               Dashboard
