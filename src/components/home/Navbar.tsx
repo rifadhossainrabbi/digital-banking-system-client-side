@@ -38,10 +38,10 @@ interface NavbarProps {
 
 const navLinks = [
   { label: 'Home', href: '/' },
-  { label: 'Features', href: '/#features' },
-  { label: 'Banking Services', href: '/#services' },
-  { label: 'About Us', href: '/#about' },
-  { label: 'Contact', href: '/#contact' },
+  { label: 'Features', href: '/features' },
+  { label: 'Banking Services', href: '/services' },
+  { label: 'About Us', href: '/about' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 const emptySubscribe = () => () => {};
