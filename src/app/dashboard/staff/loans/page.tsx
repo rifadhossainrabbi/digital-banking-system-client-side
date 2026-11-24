@@ -448,7 +448,7 @@ export default function StaffLoansPage() {
                     placeholder="Add an internal observation, salary verification note, etc..."
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
-                    className="flex-1 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                    className="flex-1 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 focus:border-amber-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                   />
                   <button
                     type="submit"

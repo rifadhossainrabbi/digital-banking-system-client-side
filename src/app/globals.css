@@ -59,3 +59,48 @@ a[role="button"]:not(:disabled):active,
   width: 30px !important;
   border-radius: 5px !important;
 }
+
+/* ===== Global Input / Select / Textarea Theme Fix ===== */
+/* Prevent browser autofill & focus from forcing white background */
+input,
+textarea,
+select {
+  background-color: inherit;
+  color: inherit;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Light mode focus */
+input:focus,
+textarea:focus,
+select:focus {
+  background-color: #f8fafc;
+  outline: none;
+}
+
+/* Dark mode focus — override browser default white */
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* Chrome autofill dark mode fix */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #1e293b inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  caret-color: #f8fafc !important;
+}
+
+/* Light mode autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #f8fafc inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+}

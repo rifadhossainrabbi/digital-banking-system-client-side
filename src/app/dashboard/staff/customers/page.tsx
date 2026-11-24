@@ -234,7 +234,7 @@ export default function StaffCustomersPage() {
               setPage(1);
             }}
             placeholder="Search by customer name, email, or phone number..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-10 pr-4 text-xs text-slate-900 transition focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white dark:focus:border-amber-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-10 pr-4 text-xs text-slate-900 transition focus:border-amber-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white dark:focus:border-amber-500"
           />
         </div>
 
@@ -440,7 +440,7 @@ export default function StaffCustomersPage() {
                   placeholder="e.g. Jonathan Doe"
                   value={registerForm.name}
                   onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                 />
               </div>
 
@@ -454,7 +454,7 @@ export default function StaffCustomersPage() {
                   placeholder="customer@domain.com"
                   value={registerForm.email}
                   onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                 />
               </div>
 
@@ -467,7 +467,7 @@ export default function StaffCustomersPage() {
                   placeholder="+1 (555) 000-0000"
                   value={registerForm.phone}
                   onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                 />
               </div>
 
@@ -481,7 +481,7 @@ export default function StaffCustomersPage() {
                     placeholder="Defaults Customer@1234"
                     value={registerForm.password}
                     onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                   />
                 </div>
                 <div>
@@ -494,7 +494,7 @@ export default function StaffCustomersPage() {
                     placeholder="Defaults 1234"
                     value={registerForm.transactionPin}
                     onChange={(e) => setRegisterForm({ ...registerForm, transactionPin: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                   />
                 </div>
               </div>
@@ -575,7 +575,7 @@ export default function StaffCustomersPage() {
                       accountType: e.target.value as any,
                     })
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs font-semibold text-slate-900 focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs font-semibold text-slate-900 focus:border-amber-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                 >
                   <option value="Savings Account">Savings Account (Daily Limit: $5,000)</option>
                   <option value="Current Account">Current Account (Daily Limit: $15,000)</option>
@@ -598,7 +598,7 @@ export default function StaffCustomersPage() {
                       initialDeposit: parseFloat(e.target.value) || 0,
                     })
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs text-slate-900 focus:border-amber-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                 />
                 <p className="mt-1 text-[11px] text-slate-400">
                   Credited immediately via Vaultly Central Reserve Deposit transaction.

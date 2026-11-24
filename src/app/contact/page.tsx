@@ -171,7 +171,7 @@ export default function ContactPage() {
                       placeholder="Alexander Vance"
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-slate-900 focus:border-emerald-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                     />
                   </div>
                   <div>
@@ -184,7 +184,7 @@ export default function ContactPage() {
                       placeholder="customer@domain.com"
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-slate-900 focus:border-emerald-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                     />
                   </div>
                 </div>
@@ -215,7 +215,7 @@ export default function ContactPage() {
                       placeholder="Brief topic..."
                       value={form.subject}
                       onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-slate-900 focus:border-emerald-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                     />
                   </div>
                 </div>
@@ -230,7 +230,7 @@ export default function ContactPage() {
                     placeholder="Describe your inquiry in detail..."
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-slate-900 focus:border-emerald-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950/50 dark:text-white"
                   />
                 </div>
 

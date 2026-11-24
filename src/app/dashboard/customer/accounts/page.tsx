@@ -9,6 +9,7 @@ import {
   ChevronRight,
   AlertCircle,
   Loader2,
+  FileText,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import {
@@ -16,20 +17,53 @@ import {
   createNewAccount,
   BankAccount,
 } from '@/redux/slices/accountSlice';
+import { generateAccountStatementPDF } from '@/utils/pdfGenerator';
 
 export default function CustomerAccountsPage() {
   const dispatch = useAppDispatch();
   const { accounts, activeAccount, isCreating } = useAppSelector(
     state => state.accounts
   );
+  const { user } = useAppSelector(state => state.auth);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [selectedType, setSelectedType] = useState<
     'Savings Account' | 'Current Account' | 'Business Account'
   >('Current Account');
   const [openingDeposit, setOpeningDeposit] = useState('500');
   const [formError, setFormError] = useState<string | null>(null);
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
+
+  const handleDownloadPdfStatement = async () => {
+    if (!activeAccount) return;
+    setIsDownloadingPdf(true);
+    try {
+      const res = await fetch(
+        `/api/customer/transactions?account=${activeAccount.accountNumber}&limit=100`
+      );
+      const data = await res.json();
+      const txns = data.transactions || [];
+
+      generateAccountStatementPDF(
+        {
+          customerName: user?.name || 'Valued Customer',
+          customerEmail: user?.email || '',
+          accountNumber: activeAccount.accountNumber,
+          accountType: activeAccount.accountType,
+          balance: activeAccount.balance,
+          dailyLimit: activeAccount.dailyLimit || 5000,
+          minBalance: activeAccount.minBalance || 50,
+          status: activeAccount.status || 'Active',
+        },
+        txns
+      );
+    } catch (err) {
+      console.error('Failed to download statement PDF:', err);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const handleOpenAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,14 +115,28 @@ export default function CustomerAccountsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleDownloadPdfStatement}
+            disabled={!activeAccount || isDownloadingPdf}
+            className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-xs font-bold text-emerald-800 shadow-xs transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/70"
+          >
+            {isDownloadingPdf ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FileText className="h-3.5 w-3.5" />
+            )}
+            <span>{isDownloadingPdf ? 'Generating PDF...' : 'Download PDF Statement'}</span>
+          </button>
+
           <a
             href={`/api/customer/statement?account=${activeAccount?.accountNumber || ''}`}
             download
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Export Statement</span>
+            <span>CSV</span>
           </a>
 
           <button
@@ -264,7 +312,7 @@ export default function CustomerAccountsPage() {
                     step="10"
                     value={openingDeposit}
                     onChange={e => setOpeningDeposit(e.target.value)}
-                    className="w-full rounded-xl border border-transparent bg-[#f1f5f9] py-3 pl-8 pr-4 text-sm font-mono text-slate-900 focus:border-slate-300 focus:bg-white focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-xl border border-transparent bg-[#f1f5f9] py-3 pl-8 pr-4 text-sm font-mono text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
                   />
                 </div>
                 <p className="mt-1 text-[11px] text-slate-400">

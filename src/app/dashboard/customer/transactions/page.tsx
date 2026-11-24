@@ -8,6 +8,8 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  FileText,
+  Loader2,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import {
@@ -15,6 +17,7 @@ import {
   Transaction,
 } from '@/redux/slices/transactionSlice';
 import TransactionReceiptModal from '@/components/customer/TransactionReceiptModal';
+import { generateAccountStatementPDF } from '@/utils/pdfGenerator';
 
 export default function CustomerTransactionsPage() {
   const dispatch = useAppDispatch();
@@ -22,11 +25,43 @@ export default function CustomerTransactionsPage() {
     state => state.transactions
   );
   const { activeAccount } = useAppSelector(state => state.accounts);
+  const { user } = useAppSelector(state => state.auth);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('All');
   const [page, setPage] = useState(1);
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  const handleDownloadPdfStatement = async () => {
+    if (!activeAccount) return;
+    setIsDownloadingPdf(true);
+    try {
+      const res = await fetch(
+        `/api/customer/transactions?account=${activeAccount.accountNumber}&limit=100`
+      );
+      const data = await res.json();
+      const txns = data.transactions || [];
+
+      generateAccountStatementPDF(
+        {
+          customerName: user?.name || 'Valued Customer',
+          customerEmail: user?.email || '',
+          accountNumber: activeAccount.accountNumber,
+          accountType: activeAccount.accountType,
+          balance: activeAccount.balance,
+          dailyLimit: activeAccount.dailyLimit || 5000,
+          minBalance: activeAccount.minBalance || 50,
+          status: activeAccount.status || 'Active',
+        },
+        txns
+      );
+    } catch (err) {
+      console.error('Failed to download statement PDF:', err);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   useEffect(() => {
     dispatch(
@@ -69,14 +104,28 @@ export default function CustomerTransactionsPage() {
           </p>
         </div>
 
-        <div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleDownloadPdfStatement}
+            disabled={!activeAccount || isDownloadingPdf}
+            className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-xs font-bold text-emerald-800 shadow-xs transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/70"
+          >
+            {isDownloadingPdf ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FileText className="h-3.5 w-3.5" />
+            )}
+            <span>{isDownloadingPdf ? 'Generating PDF...' : 'Download PDF Statement'}</span>
+          </button>
+
           <a
             href={`/api/customer/statement?account=${activeAccount?.accountNumber || ''}`}
             download
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Download CSV Statement</span>
+            <span>CSV</span>
           </a>
         </div>
       </div>
@@ -94,7 +143,7 @@ export default function CustomerTransactionsPage() {
               setPage(1);
             }}
             placeholder="Search by Transaction ID, recipient, or description..."
-            className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] py-2.5 pl-10 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-hidden dark:bg-slate-800 dark:text-white"
+            className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] py-2.5 pl-10 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
           />
         </div>
 

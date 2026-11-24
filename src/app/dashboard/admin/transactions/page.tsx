@@ -122,7 +122,7 @@ export default function AdminTransactionsPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search by txn ID, account, description, client name..."
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-2 pl-10 pr-4 text-xs text-slate-900 focus:border-rose-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-2 pl-10 pr-4 text-xs text-slate-900 focus:border-rose-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950 dark:text-white"
             />
           </div>
 
@@ -130,7 +130,7 @@ export default function AdminTransactionsPage() {
             <select
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-2 text-xs text-slate-900 focus:border-rose-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-2 text-xs text-slate-900 focus:border-rose-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950 dark:text-white"
             >
               <option value="All">All Types</option>
               <option value="Deposit">Deposit</option>
@@ -145,7 +145,7 @@ export default function AdminTransactionsPage() {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-2 text-xs text-slate-900 focus:border-rose-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 p-2 text-xs text-slate-900 focus:border-rose-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950 dark:text-white"
             >
               <option value="All">All Statuses</option>
               <option value="Completed">Completed</option>
@@ -349,7 +349,7 @@ export default function AdminTransactionsPage() {
                   value={reviewNote}
                   onChange={e => setReviewNote(e.target.value)}
                   placeholder="Record justification for clearing or reversing..."
-                  className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-900 focus:border-rose-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-900 focus:border-rose-500 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                 />
               </div>
 

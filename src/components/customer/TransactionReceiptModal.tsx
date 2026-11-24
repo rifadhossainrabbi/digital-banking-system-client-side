@@ -9,8 +9,10 @@ import {
   Check,
   Calendar,
   ShieldCheck,
+  Download,
 } from 'lucide-react';
 import { Transaction } from '@/redux/slices/transactionSlice';
+import { generateTransactionReceiptPDF } from '@/utils/pdfGenerator';
 
 interface ReceiptModalProps {
   transaction: Transaction | null;
@@ -190,7 +192,7 @@ export default function TransactionReceiptModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-2.5 pt-2">
           <button
             type="button"
             onClick={onClose}
@@ -201,10 +203,18 @@ export default function TransactionReceiptModal({
           <button
             type="button"
             onClick={handlePrint}
-            className="flex items-center gap-2 rounded-xl bg-[#0b162c] px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#152342] dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
             <Printer className="h-3.5 w-3.5" />
-            <span>Print Receipt</span>
+            <span>Print</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => generateTransactionReceiptPDF(transaction)}
+            className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span>Download PDF Receipt</span>
           </button>
         </div>
       </div>

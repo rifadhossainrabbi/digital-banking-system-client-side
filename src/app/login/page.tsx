@@ -185,7 +185,7 @@ function LoginForm() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full rounded-xl border border-transparent bg-[#f1f5f9] py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-slate-700 dark:focus:bg-slate-900 dark:focus:ring-slate-800"
+                className="w-full rounded-xl border border-transparent bg-[#f1f5f9] py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-slate-700 dark:focus:bg-slate-900 dark:focus:ring-slate-800"
               />
             </div>
           </div>
@@ -207,7 +207,7 @@ function LoginForm() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full rounded-xl border border-transparent bg-[#f1f5f9] py-3 pl-10 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-slate-700 dark:focus:bg-slate-900 dark:focus:ring-slate-800"
+                className="w-full rounded-xl border border-transparent bg-[#f1f5f9] py-3 pl-10 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-slate-700 dark:focus:bg-slate-900 dark:focus:ring-slate-800"
               />
               <button
                 type="button"

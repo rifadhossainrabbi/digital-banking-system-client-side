@@ -191,7 +191,7 @@ export default function CustomerTransferPage() {
                   setRecipientAccount(alt?.accountNumber || '');
                 }
               }}
-              className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] p-3.5 text-xs font-semibold text-slate-900 focus:border-slate-300 focus:bg-white focus:outline-hidden dark:bg-slate-800 dark:text-white"
+              className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] p-3.5 text-xs font-semibold text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
             >
               {accounts.map((acc: BankAccount) => (
                 <option key={acc.accountNumber} value={acc.accountNumber}>
@@ -225,7 +225,7 @@ export default function CustomerTransferPage() {
                 id="recipient-account"
                 value={recipientAccount}
                 onChange={e => setRecipientAccount(e.target.value)}
-                className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] p-3.5 text-xs font-semibold text-slate-900 focus:border-slate-300 focus:bg-white focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] p-3.5 text-xs font-semibold text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
               >
                 {accounts
                   .filter((a: BankAccount) => a.accountNumber !== senderAccount)
@@ -247,7 +247,7 @@ export default function CustomerTransferPage() {
                     setRecipientAccount(e.target.value.replace(/\s+/g, ''))
                   }
                   placeholder="Enter 10-digit account number (e.g. 1003489112)"
-                  className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] p-3.5 text-xs font-mono font-bold text-slate-900 placeholder:font-sans placeholder:font-normal placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] p-3.5 text-xs font-mono font-bold text-slate-900 placeholder:font-sans placeholder:font-normal placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
                 />
               </div>
             )}
@@ -285,7 +285,7 @@ export default function CustomerTransferPage() {
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] py-3.5 pl-9 pr-4 font-mono text-xl font-bold text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] py-3.5 pl-9 pr-4 font-mono text-xl font-bold text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
               />
             </div>
           </div>
@@ -304,7 +304,7 @@ export default function CustomerTransferPage() {
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="e.g. Rent, consulting fee, family support"
-              className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-hidden dark:bg-slate-800 dark:text-white"
+              className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
             />
           </div>
 
@@ -328,7 +328,7 @@ export default function CustomerTransferPage() {
                   setTransactionPin(e.target.value.replace(/\D/g, ''))
                 }
                 placeholder="Enter 4-6 digit PIN (Default Demo PIN: 1234)"
-                className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] py-3.5 pl-11 pr-4 font-mono text-sm tracking-widest text-slate-900 placeholder:font-sans placeholder:tracking-normal placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] py-3.5 pl-11 pr-4 font-mono text-sm tracking-widest text-slate-900 placeholder:font-sans placeholder:tracking-normal placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
               />
             </div>
           </div>
