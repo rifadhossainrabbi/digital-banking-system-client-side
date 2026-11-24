@@ -3,11 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useTheme } from 'next-themes';
 import {
   Menu,
-  Sun,
-  Moon,
   ShieldCheck,
   Activity,
   ArrowUpRight,
@@ -19,7 +16,6 @@ interface HeaderProps {
 
 export default function AdminHeader({ onOpenMobile }: HeaderProps) {
   const { data: session } = useSession();
-  const { resolvedTheme, setTheme } = useTheme();
 
   const getInitials = (name?: string | null) => {
     if (!name || !name.trim()) return 'AD';
@@ -64,20 +60,6 @@ export default function AdminHeader({ onOpenMobile }: HeaderProps) {
           <span>View Public Site</span>
           <ArrowUpRight className="h-3.5 w-3.5" />
         </Link>
-
-        {/* Theme Toggle */}
-        <button
-          type="button"
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          aria-label="Toggle Theme"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          {resolvedTheme === 'dark' ? (
-            <Sun className="h-4 w-4 text-amber-400" />
-          ) : (
-            <Moon className="h-4 w-4 text-slate-600" />
-          )}
-        </button>
 
         {/* Admin Avatar & Role Badge */}
         <div className="flex items-center gap-2 pl-2">

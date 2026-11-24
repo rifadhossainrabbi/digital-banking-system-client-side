@@ -3,11 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useTheme } from 'next-themes';
 import {
   Menu,
-  Sun,
-  Moon,
   ArrowRightLeft,
   ChevronDown,
   Wallet,
@@ -21,7 +18,6 @@ interface HeaderProps {
 
 export default function CustomerHeader({ onOpenMobile }: HeaderProps) {
   const { data: session } = useSession();
-  const { resolvedTheme, setTheme } = useTheme();
   const dispatch = useAppDispatch();
   const { accounts, activeAccount } = useAppSelector(state => state.accounts);
 
@@ -111,22 +107,6 @@ export default function CustomerHeader({ onOpenMobile }: HeaderProps) {
           <ArrowRightLeft className="h-3.5 w-3.5" />
           <span>Quick Transfer</span>
         </Link>
-
-        {/* Theme Toggle */}
-        <button
-          type="button"
-          onClick={() =>
-            setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
-          }
-          aria-label="Toggle Theme"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          {resolvedTheme === 'dark' ? (
-            <Sun className="h-4 w-4 text-amber-400" />
-          ) : (
-            <Moon className="h-4 w-4 text-slate-700" />
-          )}
-        </button>
 
         {/* User Profile Avatar / First 2 Digits (Initials) */}
         <Link
