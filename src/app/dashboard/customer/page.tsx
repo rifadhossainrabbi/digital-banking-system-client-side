@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
@@ -20,50 +20,79 @@ import {
 import { useAppSelector } from '@/redux/hooks';
 import { Transaction } from '@/redux/slices/transactionSlice';
 
-// Lazy loaded heavy client components
-const CustomerCharts = dynamic(() => import('@/components/customer/CustomerCharts'), {
-  loading: () => (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <div className="h-[360px] animate-pulse rounded-3xl bg-slate-100 p-6 lg:col-span-2 dark:bg-slate-900" />
-      <div className="h-[360px] animate-pulse rounded-3xl bg-slate-100 p-6 dark:bg-slate-900" />
-    </div>
-  ),
-});
+const CustomerCharts = dynamic(
+  () => import('@/components/customer/CustomerCharts'),
+  {
+    loading: () => (
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="h-[360px] animate-pulse rounded-3xl bg-slate-100 p-6 lg:col-span-2 dark:bg-slate-900" />
+        <div className="h-[360px] animate-pulse rounded-3xl bg-slate-100 p-6 dark:bg-slate-900" />
+      </div>
+    ),
+  },
+);
 
 const TransactionReceiptModal = dynamic(
   () => import('@/components/customer/TransactionReceiptModal'),
-  { ssr: false }
+  { ssr: false },
 );
 
-export default function CustomerDashboardOverview() {
-  const { accounts, activeAccount } = useAppSelector(
-    state => state.accounts
+const emptySubscribe = () => () => {};
+function useMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
   );
+}
+
+export default function CustomerDashboardOverview() {
+  const mounted = useMounted();
+
+  const { accounts, activeAccount } = useAppSelector(state => state.accounts);
   const { transactions, isLoading: txnsLoading } = useAppSelector(
-    state => state.transactions
+    state => state.transactions,
   );
   const { loans } = useAppSelector(state => state.loans);
 
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
   const [hideBalance, setHideBalance] = useState(false);
 
-  // Active account stats
-  const currentAccount = activeAccount || accounts[0];
+  // Use mounted guard so SSR and first client hydration pass match 100%
+  const safeAccounts = mounted ? accounts : [];
+  const safeTransactions = mounted ? transactions : [];
+  const safeLoans = mounted ? loans : [];
+  const isFetchingTxns = !mounted || txnsLoading;
+
+  const currentAccount = mounted ? activeAccount || safeAccounts[0] : undefined;
   const balance = currentAccount?.balance ?? 0;
   const accountNumber = currentAccount?.accountNumber ?? '----------';
   const accountType = currentAccount?.accountType ?? 'Savings Account';
   const accountStatus = currentAccount?.status ?? 'Active';
 
-  const totalDeposits = transactions
-    .filter(t => t.type === 'Deposit' || t.type === 'Loan Disbursement')
+  const totalDeposits = safeTransactions
+    .filter(
+      t =>
+        t.type === 'Deposit' ||
+        t.type === 'Loan Disbursement' ||
+        (t.type === 'Transfer' &&
+          currentAccount?.accountNumber &&
+          t.receiverAccount === currentAccount.accountNumber),
+    )
     .reduce((acc, t) => acc + t.amount, 0);
 
-  const totalWithdrawals = transactions
-    .filter(t => t.type === 'Withdrawal')
+  const totalWithdrawals = safeTransactions
+    .filter(
+      t =>
+        t.type === 'Withdrawal' ||
+        (t.type === 'Transfer' &&
+          currentAccount?.accountNumber &&
+          t.senderAccount === currentAccount.accountNumber),
+    )
     .reduce((acc, t) => acc + t.amount, 0);
 
-  const activeLoanCount = loans.filter(
-    l => l.status === 'Active' || l.status === 'Approved'
+  const activeLoanCount = safeLoans.filter(
+    l => l.status === 'Active' || l.status === 'Approved',
   ).length;
 
   return (
@@ -84,7 +113,8 @@ export default function CustomerDashboardOverview() {
             Hello, {currentAccount?.userName || 'Valued Client'}
           </h1>
           <p className="mt-1 text-xs text-slate-500 sm:text-sm dark:text-slate-400">
-            Real-time digital overview of your bank accounts, cash flow, and financial assets.
+            Real-time digital overview of your bank accounts, cash flow, and
+            financial assets.
           </p>
         </div>
 
@@ -125,7 +155,11 @@ export default function CustomerDashboardOverview() {
                 className="rounded-lg p-1 text-slate-400 hover:text-white"
                 aria-label="Toggle balance privacy"
               >
-                {hideBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {hideBalance ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </button>
               <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 backdrop-blur-xs">
                 {accountStatus}
@@ -137,16 +171,16 @@ export default function CustomerDashboardOverview() {
             <span className="text-[11px] font-medium text-slate-400">
               Active Available Balance
             </span>
-            <div className="mt-1 font-mono text-3xl font-extrabold tracking-tight sm:text-4xl text-white">
-              {hideBalance ? (
-                '••••••••'
-              ) : (
-                `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
-              )}
+            <div className="mt-1 font-mono text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              {hideBalance
+                ? '••••••••'
+                : `$${balance.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                  })}`}
             </div>
           </div>
 
-          <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4 text-xs font-mono text-slate-300">
+          <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4 font-mono text-xs text-slate-300">
             <div>
               <p className="text-[10px] text-slate-400">ACCOUNT NUMBER</p>
               <p className="font-semibold tracking-wider">{accountNumber}</p>
@@ -172,7 +206,10 @@ export default function CustomerDashboardOverview() {
           </div>
           <div className="mt-4">
             <div className="font-mono text-2xl font-extrabold text-slate-900 dark:text-white">
-              ${totalDeposits.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              $
+              {totalDeposits.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+              })}
             </div>
             <p className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400">
               +Recorded Inflow
@@ -187,7 +224,7 @@ export default function CustomerDashboardOverview() {
           </Link>
         </div>
 
-        {/* Total Withdrawals */}
+        {/* Total Withdrawals / Outflow */}
         <div className="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -199,10 +236,13 @@ export default function CustomerDashboardOverview() {
           </div>
           <div className="mt-4">
             <div className="font-mono text-2xl font-extrabold text-slate-900 dark:text-white">
-              ${totalWithdrawals.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              $
+              {totalWithdrawals.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+              })}
             </div>
             <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
-              -Settled Withdrawals
+              -Settled Outflow
             </p>
           </div>
           <Link
@@ -242,9 +282,9 @@ export default function CustomerDashboardOverview() {
               <Banknote className="h-5 w-5" />
             </div>
             <span className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200">
-              Deposit & Withdraw
+              Deposit &amp; Withdraw
             </span>
-            <span className="text-[10px] text-slate-400">Cash & Wire</span>
+            <span className="text-[10px] text-slate-400">Cash &amp; Wire</span>
           </Link>
 
           <Link
@@ -255,9 +295,11 @@ export default function CustomerDashboardOverview() {
               <CreditCard className="h-5 w-5" />
             </div>
             <span className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200">
-              My Accounts ({accounts.length})
+              My Accounts ({safeAccounts.length})
             </span>
-            <span className="text-[10px] text-slate-400">Open & Switch</span>
+            <span className="text-[10px] text-slate-400">
+              Open &amp; Switch
+            </span>
           </Link>
 
           <Link
@@ -268,13 +310,17 @@ export default function CustomerDashboardOverview() {
               <FileSpreadsheet className="h-5 w-5" />
             </div>
             <span className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200">
-              Loans & EMI ({activeLoanCount})
+              Loans &amp; EMI ({activeLoanCount})
             </span>
-            <span className="text-[10px] text-slate-400">Apply & Repay</span>
+            <span className="text-[10px] text-slate-400">
+              Apply &amp; Repay
+            </span>
           </Link>
 
           <a
-            href={`/api/customer/statement?account=${currentAccount?.accountNumber || ''}`}
+            href={`/api/customer/statement?account=${
+              currentAccount?.accountNumber || ''
+            }`}
             download
             className="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-100 bg-[#f8fafc] p-4 text-center transition hover:border-slate-300 hover:bg-slate-100/50 sm:col-span-1 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-slate-700"
           >
@@ -289,9 +335,16 @@ export default function CustomerDashboardOverview() {
         </div>
       </div>
 
-      {/* Interactive Financial Charts */}
-      <Suspense fallback={<div className="h-64 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-800" />}>
-        <CustomerCharts transactions={transactions} />
+      {/* Interactive Financial Charts (Real Data Only) */}
+      <Suspense
+        fallback={
+          <div className="h-64 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-800" />
+        }
+      >
+        <CustomerCharts
+          transactions={safeTransactions}
+          activeAccountNumber={currentAccount?.accountNumber}
+        />
       </Suspense>
 
       {/* Recent Transactions Table */}
@@ -302,7 +355,8 @@ export default function CustomerDashboardOverview() {
               Recent Transactions
             </h3>
             <p className="text-xs text-slate-400">
-              Click any transaction row to view and print its detailed cryptographic receipt
+              Click any transaction row to view and print its detailed
+              cryptographic receipt
             </p>
           </div>
           <Link
@@ -314,11 +368,11 @@ export default function CustomerDashboardOverview() {
           </Link>
         </div>
 
-        {txnsLoading ? (
+        {isFetchingTxns ? (
           <div className="py-12 text-center text-xs text-slate-400">
             Loading recent transactions...
           </div>
-        ) : transactions.length === 0 ? (
+        ) : safeTransactions.length === 0 ? (
           <div className="py-12 text-center text-xs text-slate-400">
             No transactions found yet. Initiate a transfer to get started.
           </div>
@@ -336,10 +390,12 @@ export default function CustomerDashboardOverview() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {transactions.slice(0, 6).map(txn => {
+                {safeTransactions.slice(0, 6).map(txn => {
                   const isCredit =
                     txn.type === 'Deposit' ||
-                    txn.type === 'Loan Disbursement';
+                    txn.type === 'Loan Disbursement' ||
+                    (txn.type === 'Transfer' &&
+                      currentAccount?.accountNumber === txn.receiverAccount);
 
                   return (
                     <tr

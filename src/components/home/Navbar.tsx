@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useSession, signOut } from 'next-auth/react';
 import {
@@ -49,12 +49,13 @@ function useMounted() {
   return React.useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 }
 
 const Navbar: React.FC<NavbarProps> = ({ user: propUser = null, onLogout }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const { data: session } = useSession();
 
@@ -86,12 +87,18 @@ const Navbar: React.FC<NavbarProps> = ({ user: propUser = null, onLogout }) => {
   const handleLogout = async () => {
     if (onLogout) {
       onLogout();
-    } else {
+      return;
+    }
+
+    const isProtectedRoute = pathname.startsWith('/dashboard');
+
+    if (isProtectedRoute) {
       await signOut({ callbackUrl: '/login' });
+    } else {
+      await signOut({ redirect: false });
+      router.refresh();
     }
   };
-
-
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');

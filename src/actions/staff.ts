@@ -27,6 +27,7 @@ export async function getStaffDashboardDataAction() {
   const accountsCol = db.collection('bank_accounts');
   const transactionsCol = db.collection('transactions');
   const loansCol = db.collection('loans');
+  const requestsCol = db.collection('deposit_withdraw_requests');
 
   const [
     totalCustomers,
@@ -35,6 +36,7 @@ export async function getStaffDashboardDataAction() {
     pendingTransactions,
     flaggedTransactions,
     unverifiedCustomers,
+    pendingRequests,
   ] = await Promise.all([
     usersCol.countDocuments({ role: 'Customer' }),
     accountsCol.countDocuments({ status: 'Active' }),
@@ -42,6 +44,7 @@ export async function getStaffDashboardDataAction() {
     transactionsCol.countDocuments({ status: 'Pending' }),
     transactionsCol.countDocuments({ isSuspicious: true }),
     usersCol.countDocuments({ role: 'Customer', kycVerified: { $ne: true } }),
+    requestsCol.countDocuments({ status: 'Pending' }),
   ]);
 
   const recentTransactions = await transactionsCol
@@ -71,6 +74,7 @@ export async function getStaffDashboardDataAction() {
       pendingTransactions,
       flaggedTransactions,
       unverifiedCustomers,
+      pendingRequests,
     },
     recentTransactions: JSON.parse(JSON.stringify(recentTransactions)),
     pendingLoansList: JSON.parse(JSON.stringify(pendingLoansList)),
@@ -103,7 +107,8 @@ export async function getStaffCustomersAction(params: {
 
   const [total, customers] = await Promise.all([
     db.collection('users').countDocuments(query),
-    db.collection('users')
+    db
+      .collection('users')
       .find(query, { projection: { password: 0, transactionPin: 0 } })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -123,10 +128,12 @@ export async function getStaffCustomerDetailsAction(email: string) {
   await requireStaff();
   const db = await getDatabase();
 
-  const customer = await db.collection('users').findOne(
-    { email: email.toLowerCase(), role: 'Customer' },
-    { projection: { password: 0, transactionPin: 0 } }
-  );
+  const customer = await db
+    .collection('users')
+    .findOne(
+      { email: email.toLowerCase(), role: 'Customer' },
+      { projection: { password: 0, transactionPin: 0 } },
+    );
 
   if (!customer) {
     return { success: false, error: 'Customer not found.' };
@@ -140,7 +147,10 @@ export async function getStaffCustomerDetailsAction(email: string) {
   const recentTransactions = await db
     .collection('transactions')
     .find({
-      $or: [{ senderEmail: email.toLowerCase() }, { receiverEmail: email.toLowerCase() }],
+      $or: [
+        { senderEmail: email.toLowerCase() },
+        { receiverEmail: email.toLowerCase() },
+      ],
     })
     .sort({ createdAt: -1 })
     .limit(8)
@@ -162,16 +172,27 @@ export async function registerCustomerAction(formData: {
   transactionPin?: string;
 }) {
   const session = await requireStaff();
-  const { name, email, password = 'Customer@1234', phone, transactionPin = '1234' } = formData;
+  const {
+    name,
+    email,
+    password = 'Customer@1234',
+    phone,
+    transactionPin = '1234',
+  } = formData;
 
   if (!name.trim() || !email.trim()) {
     return { success: false, error: 'Name and email are required.' };
   }
 
   const db = await getDatabase();
-  const existing = await db.collection('users').findOne({ email: email.toLowerCase() });
+  const existing = await db
+    .collection('users')
+    .findOne({ email: email.toLowerCase() });
   if (existing) {
-    return { success: false, error: 'A user with this email address already exists.' };
+    return {
+      success: false,
+      error: 'A user with this email address already exists.',
+    };
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -204,7 +225,7 @@ export async function registerCustomerAction(formData: {
 export async function verifyCustomerKYCAction(
   email: string,
   verified: boolean,
-  verificationNotes: string = ''
+  verificationNotes: string = '',
 ) {
   const session = await requireStaff();
   const db = await getDatabase();
@@ -219,7 +240,7 @@ export async function verifyCustomerKYCAction(
         verificationNotes: verificationNotes.trim(),
         updatedAt: new Date(),
       },
-    }
+    },
   );
 
   if (result.matchedCount === 0) {
@@ -231,7 +252,9 @@ export async function verifyCustomerKYCAction(
 
   return {
     success: true,
-    message: `Customer verification updated to: ${verified ? 'Verified' : 'Unverified'}.`,
+    message: `Customer verification updated to: ${
+      verified ? 'Verified' : 'Unverified'
+    }.`,
   };
 }
 
@@ -262,9 +285,21 @@ export async function createCustomerAccountAction(data: {
   const accountNumber = '10' + Math.floor(10000000 + Math.random() * 90000000);
 
   const limitsByType = {
-    'Savings Account': { dailyLimit: 5000, maxSingleTransaction: 2000, minBalance: 50 },
-    'Current Account': { dailyLimit: 15000, maxSingleTransaction: 5000, minBalance: 100 },
-    'Business Account': { dailyLimit: 50000, maxSingleTransaction: 20000, minBalance: 500 },
+    'Savings Account': {
+      dailyLimit: 5000,
+      maxSingleTransaction: 2000,
+      minBalance: 50,
+    },
+    'Current Account': {
+      dailyLimit: 15000,
+      maxSingleTransaction: 5000,
+      minBalance: 100,
+    },
+    'Business Account': {
+      dailyLimit: 50000,
+      maxSingleTransaction: 20000,
+      minBalance: 500,
+    },
   };
 
   const limits = limitsByType[accountType] || limitsByType['Savings Account'];
@@ -286,7 +321,8 @@ export async function createCustomerAccountAction(data: {
   await db.collection('bank_accounts').insertOne(newAccount);
 
   if (depositAmount > 0) {
-    const txnId = 'TXN-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+    const txnId =
+      'TXN-' + Math.random().toString(36).substring(2, 9).toUpperCase();
     await db.collection('transactions').insertOne({
       transactionId: txnId,
       senderAccount: 'SYSTEM',
@@ -367,7 +403,8 @@ export async function getStaffTransactionsAction(params: {
 
   const [total, transactions] = await Promise.all([
     db.collection('transactions').countDocuments(query),
-    db.collection('transactions')
+    db
+      .collection('transactions')
       .find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -383,10 +420,16 @@ export async function getStaffTransactionsAction(params: {
   };
 }
 
-export async function flagSuspiciousTransactionAction(txnId: string, reason: string) {
+export async function flagSuspiciousTransactionAction(
+  txnId: string,
+  reason: string,
+) {
   const session = await requireStaff();
   if (!reason?.trim()) {
-    return { success: false, error: 'A detailed reason is required to flag a transaction.' };
+    return {
+      success: false,
+      error: 'A detailed reason is required to flag a transaction.',
+    };
   }
 
   const db = await getDatabase();
@@ -401,7 +444,7 @@ export async function flagSuspiciousTransactionAction(txnId: string, reason: str
         flagStatus: 'Pending Admin Review',
         updatedAt: new Date(),
       },
-    }
+    },
   );
 
   if (result.matchedCount === 0) {
@@ -436,7 +479,8 @@ export async function getStaffLoansAction(params: {
 
   const [total, loans] = await Promise.all([
     db.collection('loans').countDocuments(query),
-    db.collection('loans')
+    db
+      .collection('loans')
       .find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -470,7 +514,7 @@ export async function addLoanStaffNoteAction(loanId: string, note: string) {
         } as never,
       },
       $set: { updatedAt: new Date() },
-    }
+    },
   );
 
   if (result.matchedCount === 0) {
@@ -481,7 +525,10 @@ export async function addLoanStaffNoteAction(loanId: string, note: string) {
   return { success: true, message: 'Internal staff note added successfully.' };
 }
 
-export async function forwardLoanApplicationAction(loanId: string, recommendation: string) {
+export async function forwardLoanApplicationAction(
+  loanId: string,
+  recommendation: string,
+) {
   const session = await requireStaff();
   const db = await getDatabase();
 
@@ -490,11 +537,11 @@ export async function forwardLoanApplicationAction(loanId: string, recommendatio
     return { success: false, error: 'Loan application not found.' };
   }
 
-  // Security constraint: Staff cannot process their own loan applications
   if (loan.userEmail?.toLowerCase() === session.user.email?.toLowerCase()) {
     return {
       success: false,
-      error: 'Conflict of Interest: Bank Staff cannot forward or process their own loan applications.',
+      error:
+        'Conflict of Interest: Bank Staff cannot forward or process their own loan applications.',
     };
   }
 
@@ -505,10 +552,12 @@ export async function forwardLoanApplicationAction(loanId: string, recommendatio
         status: 'Under Review',
         forwardedByStaff: session.user.email,
         forwardedAt: new Date(),
-        staffRecommendation: recommendation?.trim() || 'Recommended for Admin approval upon initial review.',
+        staffRecommendation:
+          recommendation?.trim() ||
+          'Recommended for Admin approval upon initial review.',
         updatedAt: new Date(),
       },
-    }
+    },
   );
 
   revalidatePath('/dashboard/staff/loans');
@@ -519,4 +568,169 @@ export async function forwardLoanApplicationAction(loanId: string, recommendatio
     success: true,
     message: 'Loan application forwarded to Admin queue for final approval.',
   };
+}
+
+// ─── 5. Deposit & Withdrawal Clearance (Staff Approval Workflow) ─────────────
+export async function getStaffRequestsAction(
+  status = 'Pending',
+  page = 1,
+  limit = 20,
+) {
+  await requireStaff();
+  const db = await getDatabase();
+  const reqCol = db.collection('deposit_withdraw_requests');
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const query: any = {};
+  if (status !== 'All') query.status = status;
+
+  const skip = (Math.max(1, page) - 1) * limit;
+
+  const [total, requests] = await Promise.all([
+    reqCol.countDocuments(query),
+    reqCol
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray(),
+  ]);
+
+  return {
+    requests: JSON.parse(JSON.stringify(requests)),
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
+export async function reviewStaffDepositWithdrawRequestAction(
+  requestId: string,
+  status: 'Approved' | 'Rejected',
+) {
+  const session = await requireStaff();
+  const db = await getDatabase();
+  const reqDoc = await db
+    .collection('deposit_withdraw_requests')
+    .findOne({ requestId });
+
+  if (!reqDoc) {
+    return { success: false, error: 'Request not found.' };
+  }
+  if (reqDoc.status !== 'Pending') {
+    return {
+      success: false,
+      error: 'Only Pending requests can be processed.',
+    };
+  }
+  if (reqDoc.userEmail?.toLowerCase() === session.user.email?.toLowerCase()) {
+    return {
+      success: false,
+      error: 'Conflict of Interest: Cannot process your own request.',
+    };
+  }
+
+  const now = new Date();
+
+  if (status === 'Approved') {
+    const acc = await db
+      .collection('bank_accounts')
+      .findOne({ accountNumber: reqDoc.accountNumber });
+    if (!acc || acc.status !== 'Active') {
+      return {
+        success: false,
+        error: 'Target bank account is not active.',
+      };
+    }
+
+    if (reqDoc.type === 'Withdrawal') {
+      const minBalance = acc.minBalance ?? 50;
+      if (acc.balance - reqDoc.amount < minBalance) {
+        return {
+          success: false,
+          error: `Insufficient funds in account ${reqDoc.accountNumber} for withdrawal.`,
+        };
+      }
+    }
+
+    const balanceDelta =
+      reqDoc.type === 'Deposit' ? reqDoc.amount : -reqDoc.amount;
+    await db
+      .collection('bank_accounts')
+      .updateOne(
+        { accountNumber: reqDoc.accountNumber },
+        { $inc: { balance: balanceDelta }, $set: { updatedAt: now } },
+      );
+
+    const txnId =
+      'TXN-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+    const user = await db
+      .collection('users')
+      .findOne({ email: reqDoc.userEmail });
+
+    await db.collection('transactions').insertOne({
+      transactionId: txnId,
+      senderAccount:
+        reqDoc.type === 'Deposit' ? 'SYSTEM' : reqDoc.accountNumber,
+      senderName:
+        reqDoc.type === 'Deposit'
+          ? 'Vaultly Central Reserve'
+          : user?.name || 'Customer',
+      senderEmail:
+        reqDoc.type === 'Deposit' ? 'system@vaultly.bank' : reqDoc.userEmail,
+      receiverAccount:
+        reqDoc.type === 'Deposit' ? reqDoc.accountNumber : 'SYSTEM',
+      receiverName:
+        reqDoc.type === 'Deposit'
+          ? user?.name || 'Customer'
+          : 'Vaultly Processing',
+      receiverEmail:
+        reqDoc.type === 'Deposit' ? reqDoc.userEmail : 'system@vaultly.bank',
+      type: reqDoc.type,
+      amount: reqDoc.amount,
+      fee: 0,
+      status: 'Completed',
+      description: `Staff Approved (${session.user.email}) — ${reqDoc.type} Request ${requestId}`,
+      relatedRequestId: requestId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await db.collection('notifications').insertOne({
+      userEmail: reqDoc.userEmail,
+      title: `${reqDoc.type} Approved`,
+      message: `Your ${reqDoc.type} of $${reqDoc.amount} on account ${reqDoc.accountNumber} has been approved.`,
+      type: 'Transaction',
+      read: false,
+      createdAt: now,
+    });
+  } else {
+    await db.collection('notifications').insertOne({
+      userEmail: reqDoc.userEmail,
+      title: `${reqDoc.type} Request Rejected`,
+      message: `Your ${reqDoc.type} request of $${reqDoc.amount} on account ${reqDoc.accountNumber} was rejected by branch staff.`,
+      type: 'Transaction',
+      read: false,
+      createdAt: now,
+    });
+  }
+
+  await db.collection('deposit_withdraw_requests').updateOne(
+    { requestId },
+    {
+      $set: {
+        status,
+        reviewedBy: session.user.email,
+        reviewedAt: now,
+        updatedAt: now,
+      },
+    },
+  );
+
+  revalidatePath('/dashboard/staff');
+  revalidatePath('/dashboard/staff/requests');
+  revalidatePath('/dashboard/admin');
+  revalidatePath('/dashboard/admin/requests');
+
+  return { success: true, message: `Request ${status} successfully.` };
 }

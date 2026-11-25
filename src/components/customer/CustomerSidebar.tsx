@@ -12,6 +12,7 @@ import {
   FileSpreadsheet,
   ShieldCheck,
   ChevronRight,
+  UserCog,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -55,6 +56,12 @@ const navItems = [
     icon: FileSpreadsheet,
     badge: '5.5% APR',
   },
+  {
+    name: 'Profile & 2FA',
+    href: '/dashboard/customer/profile',
+    icon: UserCog,
+    badge: null,
+  },
 ];
 
 export default function CustomerSidebar({ onCloseMobile }: SidebarProps) {
@@ -66,7 +73,7 @@ export default function CustomerSidebar({ onCloseMobile }: SidebarProps) {
       <div className="mb-6 px-2">
         <Link
           href="/"
-          className="flex items-center gap-3 group"
+          className="group flex items-center gap-3"
           onClick={onCloseMobile}
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#071121] shadow-sm transition group-hover:scale-105 dark:bg-emerald-950 dark:ring-1 dark:ring-emerald-700/50">
