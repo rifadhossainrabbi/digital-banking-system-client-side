@@ -5,14 +5,27 @@ import { getDatabase } from '@/lib/db';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { role, fullName, name, email, password, accountType = 'Savings Account' } = body;
+    const {
+      role,
+      fullName,
+      name,
+      email,
+      password,
+      transactionPin,
+      accountType = 'Savings Account',
+    } = body;
 
     const userName = (fullName || name || '').trim();
     const trimmedEmail = (email || '').trim().toLowerCase();
-    const validAccountTypes = ['Savings Account', 'Current Account', 'Business Account'];
-    const chosenAccountType = validAccountTypes.includes(accountType) ? accountType : 'Savings Account';
+    const validAccountTypes = [
+      'Savings Account',
+      'Current Account',
+      'Business Account',
+    ];
+    const chosenAccountType = validAccountTypes.includes(accountType)
+      ? accountType
+      : 'Savings Account';
 
-    // 1. Basic validation (Only Name, Email, Password, Role)
     if (!userName || !trimmedEmail || !password) {
       return NextResponse.json(
         { error: 'Please provide name, email, and password.' },
@@ -37,7 +50,6 @@ export async function POST(req: Request) {
     const db = await getDatabase();
     const usersCollection = db.collection('users');
 
-    // 2. Check if user already exists
     const existingUser = await usersCollection.findOne({ email: trimmedEmail });
     if (existingUser) {
       return NextResponse.json(
@@ -46,17 +58,22 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+    const pinToHash =
+      transactionPin && /^\d{4,6}$/.test(String(transactionPin))
+        ? String(transactionPin)
+        : '1234';
+    const hashedPin = await bcrypt.hash(pinToHash, 10);
     const now = new Date();
 
     if (role === 'Customer') {
-      // Google login-এর মতোই সিম্পল ইউজার স্ট্রাকচার
       const userResult = await usersCollection.insertOne({
         name: userName,
         email: trimmedEmail,
         image: null,
         password: hashedPassword,
+        transactionPin: hashedPin,
+        twoFactorEnabled: false,
         role: 'Customer',
         accountType: chosenAccountType,
         status: 'Active',
@@ -64,7 +81,6 @@ export async function POST(req: Request) {
         updatedAt: now,
       });
 
-      // Generate a unique 10-digit bank account number
       const accountNumber =
         '10' + Math.floor(10000000 + Math.random() * 90000000);
 
@@ -72,10 +88,9 @@ export async function POST(req: Request) {
         chosenAccountType === 'Business Account'
           ? { dailyLimit: 50000, maxSingleTransaction: 20000, minBalance: 500 }
           : chosenAccountType === 'Current Account'
-          ? { dailyLimit: 15000, maxSingleTransaction: 5000, minBalance: 100 }
-          : { dailyLimit: 5000, maxSingleTransaction: 2000, minBalance: 50 };
+            ? { dailyLimit: 15000, maxSingleTransaction: 5000, minBalance: 100 }
+            : { dailyLimit: 5000, maxSingleTransaction: 2000, minBalance: 50 };
 
-      // Create initial Account with $1,000 welcome opening deposit
       await db.collection('bank_accounts').insertOne({
         userId: userResult.insertedId.toString(),
         userEmail: trimmedEmail,
@@ -85,6 +100,24 @@ export async function POST(req: Request) {
         balance: 1000.0,
         status: 'Active',
         ...limits,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      await db.collection('transactions').insertOne({
+        transactionId:
+          'TXN-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+        senderAccount: 'SYSTEM',
+        senderName: 'Vaultly Welcome Reserve',
+        senderEmail: 'system@vaultly.bank',
+        receiverAccount: accountNumber,
+        receiverName: userName,
+        receiverEmail: trimmedEmail,
+        type: 'Deposit',
+        amount: 1000.0,
+        fee: 0,
+        status: 'Completed',
+        description: `Welcome Opening Deposit (${chosenAccountType})`,
         createdAt: now,
         updatedAt: now,
       });
@@ -100,7 +133,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Bank Staff registration - Requires Admin Approval
     await usersCollection.insertOne({
       name: userName,
       email: trimmedEmail,

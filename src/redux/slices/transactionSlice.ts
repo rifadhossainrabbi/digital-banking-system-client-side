@@ -62,17 +62,25 @@ export const fetchTransactions = createAsyncThunk(
       | {
           accountNumber?: string;
           type?: string;
+          status?: string;
+          startDate?: string;
+          endDate?: string;
           search?: string;
           page?: number;
           limit?: number;
         }
       | undefined,
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const query = new URLSearchParams();
       if (params?.accountNumber) query.set('account', params.accountNumber);
       if (params?.type && params.type !== 'All') query.set('type', params.type);
+      if (params?.status && params.status !== 'All') {
+        query.set('status', params.status);
+      }
+      if (params?.startDate) query.set('startDate', params.startDate);
+      if (params?.endDate) query.set('endDate', params.endDate);
       if (params?.search) query.set('search', params.search);
       if (params?.page) query.set('page', params.page.toString());
       if (params?.limit) query.set('limit', params.limit.toString());
@@ -87,7 +95,7 @@ export const fetchTransactions = createAsyncThunk(
       const msg = err instanceof Error ? err.message : 'Network error';
       return rejectWithValue(msg);
     }
-  }
+  },
 );
 
 export const executeFundTransfer = createAsyncThunk(
@@ -99,8 +107,10 @@ export const executeFundTransfer = createAsyncThunk(
       amount: number;
       description: string;
       transactionPin: string;
+      twoFactorCode?: string;
+      idempotencyKey?: string;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const res = await fetch('/api/customer/transfer', {
@@ -110,6 +120,12 @@ export const executeFundTransfer = createAsyncThunk(
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.requires2FA) {
+          return rejectWithValue({
+            message: data.error || '2FA verification required.',
+            requires2FA: true,
+          });
+        }
         return rejectWithValue(data.error || 'Transfer failed');
       }
       return data;
@@ -117,7 +133,7 @@ export const executeFundTransfer = createAsyncThunk(
       const msg = err instanceof Error ? err.message : 'Network error';
       return rejectWithValue(msg);
     }
-  }
+  },
 );
 
 export const fetchDepositWithdrawRequests = createAsyncThunk(
@@ -136,7 +152,7 @@ export const fetchDepositWithdrawRequests = createAsyncThunk(
       const msg = err instanceof Error ? err.message : 'Network error';
       return rejectWithValue(msg);
     }
-  }
+  },
 );
 
 export const submitDepositWithdrawRequest = createAsyncThunk(
@@ -148,7 +164,7 @@ export const submitDepositWithdrawRequest = createAsyncThunk(
       amount: number;
       description: string;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const res = await fetch('/api/customer/deposit-withdraw', {
@@ -165,7 +181,7 @@ export const submitDepositWithdrawRequest = createAsyncThunk(
       const msg = err instanceof Error ? err.message : 'Network error';
       return rejectWithValue(msg);
     }
-  }
+  },
 );
 
 export const transactionSlice = createSlice({
@@ -181,7 +197,6 @@ export const transactionSlice = createSlice({
   },
   extraReducers: builder => {
     builder
-      // Fetch transactions
       .addCase(fetchTransactions.pending, state => {
         state.isLoading = true;
         state.error = null;
@@ -195,7 +210,6 @@ export const transactionSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Transfer
       .addCase(executeFundTransfer.pending, state => {
         state.isSubmitting = true;
         state.error = null;
@@ -208,13 +222,17 @@ export const transactionSlice = createSlice({
       })
       .addCase(executeFundTransfer.rejected, (state, action) => {
         state.isSubmitting = false;
-        state.error = action.payload as string;
+        const payload = action.payload as
+          | string
+          | { message?: string; requires2FA?: boolean };
+        state.error =
+          typeof payload === 'string'
+            ? payload
+            : payload?.message || 'Transfer failed';
       })
-      // Fetch Requests
       .addCase(fetchDepositWithdrawRequests.fulfilled, (state, action) => {
         state.requests = action.payload;
       })
-      // Submit Request
       .addCase(submitDepositWithdrawRequest.pending, state => {
         state.isSubmitting = true;
         state.error = null;

@@ -3,6 +3,7 @@ import authReducer from './slices/authSlice';
 import accountReducer from './slices/accountSlice';
 import transactionReducer from './slices/transactionSlice';
 import loanReducer from './slices/loanSlice';
+import { bankingApi } from './api/bankingApi';
 
 export const store = configureStore({
   reducer: {
@@ -10,7 +11,10 @@ export const store = configureStore({
     accounts: accountReducer,
     transactions: transactionReducer,
     loans: loanReducer,
+    [bankingApi.reducerPath]: bankingApi.reducer,
   },
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware().concat(bankingApi.middleware),
   devTools: process.env.NODE_ENV !== 'production',
 });
 

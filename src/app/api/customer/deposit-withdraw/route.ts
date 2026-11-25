@@ -4,7 +4,6 @@ import { getDatabase } from '@/lib/db';
 
 export const instant = false;
 
-// GET: Retrieve deposit and withdrawal requests for customer
 export async function GET(req: Request) {
   try {
     const session = await auth();
@@ -35,17 +34,25 @@ export async function GET(req: Request) {
     console.error('Error in GET /api/customer/deposit-withdraw:', err);
     return NextResponse.json(
       { error: 'Failed to retrieve requests' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-// POST: Submit a new Deposit or Withdrawal request
 export async function POST(req: Request) {
   try {
     const session = await auth();
     if (!session || !session.user || !session.user.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (session.user.role !== 'Customer') {
+      return NextResponse.json(
+        {
+          error: 'Forbidden: Only Customer accounts can submit requests here.',
+        },
+        { status: 403 },
+      );
     }
 
     const email = session.user.email.toLowerCase();
@@ -55,31 +62,29 @@ export async function POST(req: Request) {
     if (!accountNumber || !type || !amount) {
       return NextResponse.json(
         { error: 'Account number, request type, and amount are required.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const reqAmount = Number(amount);
-    if (isNaN(reqAmount) || reqAmount <= 0) {
+    const reqAmount = Math.round(Number(amount) * 100) / 100;
+    if (isNaN(reqAmount) || reqAmount <= 0 || reqAmount > 1000000) {
       return NextResponse.json(
-        { error: 'Amount must be greater than 0.' },
-        { status: 400 }
+        { error: 'Amount must be between $0.01 and $1,000,000.' },
+        { status: 400 },
       );
     }
 
     if (type !== 'Deposit' && type !== 'Withdrawal') {
       return NextResponse.json(
         { error: 'Request type must be either Deposit or Withdrawal.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const db = await getDatabase();
     const bankAccountsCollection = db.collection('bank_accounts');
     const requestsCollection = db.collection('deposit_withdraw_requests');
-    const transactionsCollection = db.collection('transactions');
 
-    // Validate account ownership
     const account = await bankAccountsCollection.findOne({
       accountNumber,
       userEmail: email,
@@ -88,7 +93,7 @@ export async function POST(req: Request) {
     if (!account) {
       return NextResponse.json(
         { error: 'Specified bank account was not found or is unauthorized.' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -97,110 +102,84 @@ export async function POST(req: Request) {
         {
           error: `Account is currently ${account.status}. Requests cannot be processed.`,
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     if (type === 'Withdrawal') {
-      const minBalance = account.minBalance || 0;
-      if (account.balance - reqAmount < minBalance) {
+      const minBalance = account.minBalance ?? 50;
+      const pendingAgg = await requestsCollection
+        .aggregate([
+          {
+            $match: {
+              accountNumber,
+              type: 'Withdrawal',
+              status: 'Pending',
+            },
+          },
+          { $group: { _id: null, total: { $sum: '$amount' } } },
+        ])
+        .toArray();
+      const pendingWithdrawalSum = pendingAgg[0]?.total ?? 0;
+
+      if (account.balance - pendingWithdrawalSum - reqAmount < minBalance) {
         return NextResponse.json(
           {
-            error: `Insufficient funds for withdrawal. Available: $${account.balance.toFixed(2)} (Min Reserve: $${minBalance.toFixed(2)})`,
+            error: `Insufficient available funds. Balance: $${account.balance.toFixed(2)}, Pending Withdrawals: $${pendingWithdrawalSum.toFixed(2)}, Min Reserve: $${minBalance.toFixed(2)}.`,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
 
-    const requestId =
-      'REQ-' + Math.floor(100000 + Math.random() * 900000);
+    const now = new Date();
+    const requestId = 'REQ-' + Math.floor(100000 + Math.random() * 900000);
 
-    // For full workflow simulation in this digital banking environment,
-    // Approved requests process balance directly and record transactions!
-    // Auto-approve simulated requests below $10,000 for realistic instant feedback
-    const isAutoApproved = reqAmount <= 10000;
-    const initialStatus = isAutoApproved ? 'Approved' : 'Pending';
-
+    // Always enters Pending status — Admin/Staff approval required
     const newRequest = {
       requestId,
       userId: session.user.id || '',
       userEmail: email,
       userName: session.user.name || 'Customer',
       accountNumber,
+      accountType: account.accountType,
       type,
       amount: reqAmount,
-      status: initialStatus,
+      status: 'Pending' as const,
       description:
-        description ||
-        `${type} request for account ${accountNumber}`,
-      requestDate: new Date(),
-      reviewedAt: isAutoApproved ? new Date() : null,
-      reviewedBy: isAutoApproved ? 'Automated Clearance System' : null,
-      notes: isAutoApproved
-        ? 'Automated instant simulation approval'
-        : 'Awaiting Bank Staff review',
-      createdAt: new Date(),
-      updatedAt: new Date(),
+        description?.trim() || `${type} request for account ${accountNumber}`,
+      requestDate: now,
+      reviewedAt: null,
+      reviewedBy: null,
+      notes: 'Awaiting Bank Staff / Admin approval',
+      createdAt: now,
+      updatedAt: now,
     };
 
     const insertResult = await requestsCollection.insertOne(newRequest);
 
-    // If auto-approved, update account balance & record transaction
-    if (isAutoApproved) {
-      const balanceChange = type === 'Deposit' ? reqAmount : -reqAmount;
-      await bankAccountsCollection.updateOne(
-        { accountNumber },
-        {
-          $inc: { balance: balanceChange },
-          $set: { updatedAt: new Date() },
-        }
-      );
-
-      const txnId =
-        'TXN-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-
-      await transactionsCollection.insertOne({
-        transactionId: txnId,
-        senderAccount: type === 'Deposit' ? 'EXTERNAL_CLEARING' : accountNumber,
-        senderName:
-          type === 'Deposit'
-            ? 'Vaultly Cashier / Deposit'
-            : session.user.name || 'Customer',
-        senderEmail: email,
-        receiverAccount:
-          type === 'Deposit' ? accountNumber : 'ATM_OR_BRANCH_PAYOUT',
-        receiverName:
-          type === 'Deposit'
-            ? session.user.name || 'Customer'
-            : 'Cashier Withdrawal',
-        receiverEmail: email,
-        type: type as 'Deposit' | 'Withdrawal',
-        amount: reqAmount,
-        fee: 0,
-        status: 'Completed',
-        description: `${type} via ${description || 'Digital Portal'}`,
-        reference: requestId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
+    await db.collection('notifications').insertOne({
+      userEmail: email,
+      title: `${type} Request Submitted`,
+      message: `Your ${type} request (${requestId}) of $${reqAmount.toFixed(2)} for account ${accountNumber} is pending Staff/Admin approval.`,
+      type: 'Transaction',
+      read: false,
+      createdAt: now,
+    });
 
     return NextResponse.json(
       {
         success: true,
-        message: isAutoApproved
-          ? `${type} of $${reqAmount.toFixed(2)} approved and balance updated!`
-          : `${type} request of $${reqAmount.toFixed(2)} submitted for staff review.`,
+        message: `${type} request (${requestId}) of $${reqAmount.toFixed(2)} submitted for Admin/Staff approval.`,
         request: { ...newRequest, _id: insertResult.insertedId },
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: unknown) {
     console.error('Error in POST /api/customer/deposit-withdraw:', err);
     return NextResponse.json(
       { error: 'Failed to process request.' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -10,6 +10,7 @@ import {
   ChevronRight,
   FileText,
   Loader2,
+  Calendar,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import {
@@ -21,19 +22,22 @@ import { generateAccountStatementPDF } from '@/utils/pdfGenerator';
 
 const TransactionReceiptModal = dynamic(
   () => import('@/components/customer/TransactionReceiptModal'),
-  { ssr: false }
+  { ssr: false },
 );
 
 export default function CustomerTransactionsPage() {
   const dispatch = useAppDispatch();
   const { transactions, totalTransactions, isLoading } = useAppSelector(
-    state => state.transactions
+    state => state.transactions,
   );
   const { activeAccount } = useAppSelector(state => state.accounts);
   const { user } = useAppSelector(state => state.auth);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('All');
+  const [selectedStatus, setSelectedStatus] = useState('All');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -42,16 +46,23 @@ export default function CustomerTransactionsPage() {
     if (!activeAccount) return;
     setIsDownloadingPdf(true);
     try {
-      const res = await fetch(
-        `/api/customer/transactions?account=${activeAccount.accountNumber}&limit=100`
-      );
+      const query = new URLSearchParams({
+        account: activeAccount.accountNumber,
+        limit: '100',
+      });
+      if (startDate) query.set('startDate', startDate);
+      if (endDate) query.set('endDate', endDate);
+      if (selectedType !== 'All') query.set('type', selectedType);
+
+      const res = await fetch(`/api/customer/transactions?${query.toString()}`);
       const data = await res.json();
       const txns = data.transactions || [];
 
       generateAccountStatementPDF(
         {
-          customerName: user?.name || 'Valued Customer',
-          customerEmail: user?.email || '',
+          customerName:
+            user?.name || activeAccount.userName || 'Valued Customer',
+          customerEmail: user?.email || activeAccount.userEmail || '',
           accountNumber: activeAccount.accountNumber,
           accountType: activeAccount.accountType,
           balance: activeAccount.balance,
@@ -59,7 +70,7 @@ export default function CustomerTransactionsPage() {
           minBalance: activeAccount.minBalance || 50,
           status: activeAccount.status || 'Active',
         },
-        txns
+        txns,
       );
     } catch (err) {
       console.error('Failed to download statement PDF:', err);
@@ -73,11 +84,22 @@ export default function CustomerTransactionsPage() {
       fetchTransactions({
         search: searchTerm,
         type: selectedType,
+        status: selectedStatus,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
         page,
         limit: 10,
-      })
+      }),
     );
-  }, [dispatch, searchTerm, selectedType, page]);
+  }, [
+    dispatch,
+    searchTerm,
+    selectedType,
+    selectedStatus,
+    startDate,
+    endDate,
+    page,
+  ]);
 
   const totalPages = Math.ceil(totalTransactions / 10) || 1;
 
@@ -89,6 +111,13 @@ export default function CustomerTransactionsPage() {
     'Loan Disbursement',
     'Loan Repayment',
   ];
+
+  const hasFilters =
+    searchTerm ||
+    selectedType !== 'All' ||
+    selectedStatus !== 'All' ||
+    startDate ||
+    endDate;
 
   return (
     <div className="space-y-8">
@@ -105,7 +134,8 @@ export default function CustomerTransactionsPage() {
             Transaction History
           </h1>
           <p className="mt-1 text-xs text-slate-500 sm:text-sm dark:text-slate-400">
-            Search, filter, and inspect detailed digital receipts for all your banking activities.
+            Search, filter by date/type/status, and inspect detailed digital
+            receipts.
           </p>
         </div>
 
@@ -121,11 +151,17 @@ export default function CustomerTransactionsPage() {
             ) : (
               <FileText className="h-3.5 w-3.5" />
             )}
-            <span>{isDownloadingPdf ? 'Generating PDF...' : 'Download PDF Statement'}</span>
+            <span>
+              {isDownloadingPdf
+                ? 'Generating PDF...'
+                : 'Download PDF Statement'}
+            </span>
           </button>
 
           <a
-            href={`/api/customer/statement?account=${activeAccount?.accountNumber || ''}`}
+            href={`/api/customer/statement?account=${
+              activeAccount?.accountNumber || ''
+            }`}
             download
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
@@ -136,42 +172,107 @@ export default function CustomerTransactionsPage() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-col gap-3 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
-        {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={e => {
-              setSearchTerm(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search by Transaction ID, recipient, or description..."
-            className="w-full rounded-2xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-xs text-slate-900 placeholder:text-slate-400 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-          />
-        </div>
-
-        {/* Type Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-          <Filter className="h-3.5 w-3.5 text-slate-400 sm:hidden" />
-          {transactionTypes.map(type => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => {
-                setSelectedType(type);
+      <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={e => {
+                setSearchTerm(e.target.value);
                 setPage(1);
               }}
-              className={`shrink-0 rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                selectedType === type
-                  ? 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-slate-950'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-              }`}
+              placeholder="Search by Transaction ID, recipient, or description..."
+              className="w-full rounded-2xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-xs text-slate-900 placeholder:text-slate-400 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            />
+          </div>
+
+          {/* Type Filter Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            <Filter className="h-3.5 w-3.5 text-slate-400 sm:hidden" />
+            {transactionTypes.map(type => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => {
+                  setSelectedType(type);
+                  setPage(1);
+                }}
+                className={`shrink-0 rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                  selectedType === type
+                    ? 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-slate-950'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Date Range & Status Filter Row */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 text-xs dark:border-slate-800">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+              <Calendar className="h-3.5 w-3.5" />
+              Date Range:
+            </span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={e => {
+                setStartDate(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+            />
+            <span className="text-slate-400">to</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={e => {
+                setEndDate(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+            />
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <select
+              value={selectedStatus}
+              onChange={e => {
+                setSelectedStatus(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
             >
-              {type}
-            </button>
-          ))}
+              <option value="All">All Statuses</option>
+              <option value="Completed">Completed</option>
+              <option value="Pending">Pending</option>
+              <option value="Failed">Failed</option>
+              <option value="Reversed">Reversed</option>
+            </select>
+
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedType('All');
+                  setSelectedStatus('All');
+                  setStartDate('');
+                  setEndDate('');
+                  setPage(1);
+                }}
+                className="text-xs font-bold text-emerald-600 hover:underline dark:text-emerald-400"
+              >
+                Reset
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -212,7 +313,9 @@ export default function CustomerTransactionsPage() {
                 {transactions.map(txn => {
                   const isCredit =
                     txn.type === 'Deposit' ||
-                    txn.type === 'Loan Disbursement';
+                    txn.type === 'Loan Disbursement' ||
+                    (txn.type === 'Transfer' &&
+                      activeAccount?.accountNumber === txn.receiverAccount);
 
                   return (
                     <tr
@@ -245,7 +348,16 @@ export default function CustomerTransactionsPage() {
                         {new Date(txn.createdAt).toLocaleDateString()}
                       </td>
                       <td className="py-3.5">
-                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                            txn.status === 'Completed'
+                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                              : txn.status === 'Reversed' ||
+                                  txn.status === 'Failed'
+                                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                                : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                          }`}
+                        >
                           {txn.status}
                         </span>
                       </td>

@@ -4,7 +4,6 @@ import { getDatabase } from '@/lib/db';
 
 export const instant = false;
 
-// GET: Fetch customer loans
 export async function GET() {
   try {
     const session = await auth();
@@ -26,17 +25,23 @@ export async function GET() {
     console.error('Error in GET /api/customer/loans:', err);
     return NextResponse.json(
       { error: 'Failed to retrieve loans' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-// POST: Apply for a new loan
 export async function POST(req: Request) {
   try {
     const session = await auth();
     if (!session || !session.user || !session.user.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (session.user.role !== 'Customer') {
+      return NextResponse.json(
+        { error: 'Forbidden: Only Customer accounts can apply for loans.' },
+        { status: 403 },
+      );
     }
 
     const email = session.user.email.toLowerCase();
@@ -51,35 +56,37 @@ export async function POST(req: Request) {
       description,
     } = body;
 
-    const principal = Number(requestedAmount);
+    const principal = Math.round(Number(requestedAmount) * 100) / 100;
     const months = Number(durationMonths);
 
     if (!accountNumber || !loanType || !principal || !months) {
       return NextResponse.json(
         { error: 'Please provide all required loan application details.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (principal < 500 || principal > 200000) {
       return NextResponse.json(
         { error: 'Loan amount must be between $500 and $200,000.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const validDurations = [6, 12, 24, 36, 48, 60];
     if (!validDurations.includes(months)) {
       return NextResponse.json(
-        { error: 'Invalid loan duration. Allowed: 6, 12, 24, 36, 48, 60 months.' },
-        { status: 400 }
+        {
+          error:
+            'Invalid loan duration. Allowed: 6, 12, 24, 36, 48, 60 months.',
+        },
+        { status: 400 },
       );
     }
 
     const db = await getDatabase();
     const bankAccountsCollection = db.collection('bank_accounts');
     const loansCollection = db.collection('loans');
-    const transactionsCollection = db.collection('transactions');
 
     const account = await bankAccountsCollection.findOne({
       accountNumber,
@@ -89,22 +96,43 @@ export async function POST(req: Request) {
     if (!account) {
       return NextResponse.json(
         { error: 'Disbursement bank account not found or unauthorized.' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    // Standard interest rate: 5.5% annual
+    if (account.status !== 'Active') {
+      return NextResponse.json(
+        { error: `Account is ${account.status}. Cannot apply for a loan.` },
+        { status: 403 },
+      );
+    }
+
+    // Prevent concurrent pending/under-review loan spam
+    const existingPending = await loansCollection.findOne({
+      userEmail: email,
+      status: { $in: ['Pending', 'Under Review'] },
+    });
+    if (existingPending) {
+      return NextResponse.json(
+        {
+          error: `You already have a ${existingPending.status.toLowerCase()} loan application (${existingPending.loanId}). Please wait for review.`,
+        },
+        { status: 400 },
+      );
+    }
+
     const annualRate = 0.055;
     const monthlyRate = annualRate / 12;
-    // Standard EMI formula: P * r * (1 + r)^n / ((1 + r)^n - 1)
     const emi =
       (principal * monthlyRate * Math.pow(1 + monthlyRate, months)) /
       (Math.pow(1 + monthlyRate, months) - 1);
     const roundedEmi = Math.round(emi * 100) / 100;
     const totalPayable = Math.round(roundedEmi * months * 100) / 100;
 
+    const now = new Date();
     const loanId = 'LN-' + Math.floor(10000 + Math.random() * 90000);
 
+    // Enters Pending status; Staff reviews & Admin approves to disburse
     const newLoan = {
       loanId,
       userId: session.user.id || '',
@@ -113,68 +141,48 @@ export async function POST(req: Request) {
       accountNumber,
       loanType,
       requestedAmount: principal,
+      totalPayable,
       interestRate: 5.5,
       durationMonths: months,
       monthlyInstallment: roundedEmi,
       monthlyIncome: Number(monthlyIncome) || 0,
       employmentStatus: employmentStatus || 'Employed',
-      description: description || 'Digital Loan Application',
-      status: 'Active' as const, // Auto-approved and disbursed for immediate simulation
-      remainingBalance: totalPayable,
+      description: description?.trim() || 'Digital Loan Application',
+      status: 'Pending' as const,
+      remainingBalance: 0,
       paidAmount: 0,
       repayments: [],
-      approvedAt: new Date(),
-      disbursedAt: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      staffNotes: [],
+      approvedAt: null,
+      disbursedAt: null,
+      createdAt: now,
+      updatedAt: now,
     };
 
     const insertResult = await loansCollection.insertOne(newLoan);
 
-    // Disburse loan funds directly into customer's bank account!
-    await bankAccountsCollection.updateOne(
-      { accountNumber },
-      {
-        $inc: { balance: principal },
-        $set: { updatedAt: new Date() },
-      }
-    );
-
-    // Record disbursement transaction
-    const txnId =
-      'TXN-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-
-    await transactionsCollection.insertOne({
-      transactionId: txnId,
-      senderAccount: 'VAULTLY_LOAN_CREDIT',
-      senderName: 'Vaultly Credit Facility',
-      senderEmail: 'credit@vaultly.bank',
-      receiverAccount: accountNumber,
-      receiverName: session.user.name || 'Customer',
-      receiverEmail: email,
-      type: 'Loan Disbursement',
-      amount: principal,
-      fee: 0,
-      status: 'Completed',
-      description: `${loanType} Disbursement (${loanId})`,
-      reference: loanId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    await db.collection('notifications').insertOne({
+      userEmail: email,
+      title: 'Loan Application Received',
+      message: `Your ${loanType} application (${loanId}) for $${principal.toLocaleString()} has been submitted and is awaiting Bank Staff / Admin review.`,
+      type: 'Loan',
+      read: false,
+      createdAt: now,
     });
 
     return NextResponse.json(
       {
         success: true,
-        message: `Congratulations! Your ${loanType} for $${principal.toLocaleString()} has been approved and disbursed.`,
+        message: `Loan application ${loanId} for $${principal.toLocaleString()} submitted for Staff & Admin review.`,
         loan: { ...newLoan, _id: insertResult.insertedId },
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: unknown) {
     console.error('Error in POST /api/customer/loans:', err);
     return NextResponse.json(
       { error: 'Failed to submit loan application.' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

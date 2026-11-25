@@ -16,16 +16,21 @@ export async function GET(req: Request) {
 
     const accountFilter = url.searchParams.get('account');
     const typeFilter = url.searchParams.get('type');
+    const statusFilter = url.searchParams.get('status');
+    const startDate = url.searchParams.get('startDate');
+    const endDate = url.searchParams.get('endDate');
     const searchFilter = url.searchParams.get('search');
-    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit = Math.max(1, parseInt(url.searchParams.get('limit') || '10'));
+    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(url.searchParams.get('limit') || '10', 10)),
+    );
     const skip = (page - 1) * limit;
 
     const db = await getDatabase();
     const bankAccountsCollection = db.collection('bank_accounts');
     const transactionsCollection = db.collection('transactions');
 
-    // Get all accounts belonging to the customer
     const userAccounts = await bankAccountsCollection
       .find({ userEmail: email })
       .toArray();
@@ -41,11 +46,16 @@ export async function GET(req: Request) {
       });
     }
 
-    // Build query
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {};
 
     if (accountFilter && accountFilter !== 'All') {
+      if (!accountNumbers.includes(accountFilter)) {
+        return NextResponse.json(
+          { error: 'Forbidden account access' },
+          { status: 403 },
+        );
+      }
       query.$or = [
         { senderAccount: accountFilter },
         { receiverAccount: accountFilter },
@@ -59,6 +69,20 @@ export async function GET(req: Request) {
 
     if (typeFilter && typeFilter !== 'All') {
       query.type = typeFilter;
+    }
+
+    if (statusFilter && statusFilter !== 'All') {
+      query.status = statusFilter;
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
     }
 
     if (searchFilter && searchFilter.trim()) {
@@ -96,7 +120,7 @@ export async function GET(req: Request) {
     console.error('Error in GET /api/customer/transactions:', err);
     return NextResponse.json(
       { error: 'Failed to retrieve transactions' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

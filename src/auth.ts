@@ -37,8 +37,10 @@ declare module '@auth/core/jwt' {
   }
 }
 
-const googleClientId = process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID;
-const googleClientSecret = process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+const googleClientId =
+  process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret =
+  process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET;
 
 const providers: Provider[] = [
   Credentials({
@@ -55,7 +57,6 @@ const providers: Provider[] = [
       const email = String(credentials.email).trim().toLowerCase();
       const password = String(credentials.password);
 
-      // Seed demo accounts if they don't exist yet
       await seedDemoAccounts();
 
       const db = await getDatabase();
@@ -67,7 +68,7 @@ const providers: Provider[] = [
 
       if (!user.password) {
         throw new Error(
-          'This account was registered using Google. Please sign in with Google.'
+          'This account was registered using Google. Please sign in with Google.',
         );
       }
 
@@ -79,7 +80,6 @@ const providers: Provider[] = [
       const role = user.role || 'Customer';
       const status = user.status || 'Active';
 
-      // Check if staff account is pending admin approval
       if (
         (role === 'Bank Staff' || role === 'STAFF') &&
         (status === 'Pending Approval' ||
@@ -91,7 +91,7 @@ const providers: Provider[] = [
 
       if (status === 'Blocked' || status === 'Suspended') {
         throw new Error(
-          'Your account has been deactivated or blocked. Please contact bank administration.'
+          'Your account has been deactivated or blocked. Please contact bank administration.',
         );
       }
 
@@ -108,14 +108,13 @@ const providers: Provider[] = [
   }),
 ];
 
-// Configure Google Provider if client ID and secret are available
 if (googleClientId && googleClientSecret) {
   providers.push(
     Google({
       clientId: googleClientId,
       clientSecret: googleClientSecret,
       allowDangerousEmailAccountLinking: true,
-    })
+    }),
   );
 }
 
@@ -148,7 +147,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             const cType = cookieStore.get('vaultly_account_type')?.value;
             if (
               cType &&
-              ['Savings Account', 'Current Account', 'Business Account'].includes(cType)
+              [
+                'Savings Account',
+                'Current Account',
+                'Business Account',
+              ].includes(cType)
             ) {
               chosenAccountType = cType;
             }
@@ -158,22 +161,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           const limits =
             chosenAccountType === 'Business Account'
-              ? { dailyLimit: 50000, maxSingleTransaction: 20000, minBalance: 500 }
+              ? {
+                  dailyLimit: 50000,
+                  maxSingleTransaction: 20000,
+                  minBalance: 500,
+                }
               : chosenAccountType === 'Current Account'
-              ? { dailyLimit: 15000, maxSingleTransaction: 5000, minBalance: 100 }
-              : { dailyLimit: 5000, maxSingleTransaction: 2000, minBalance: 50 };
+                ? {
+                    dailyLimit: 15000,
+                    maxSingleTransaction: 5000,
+                    minBalance: 100,
+                  }
+                : {
+                    dailyLimit: 5000,
+                    maxSingleTransaction: 2000,
+                    minBalance: 50,
+                  };
+
+          const now = new Date();
+          const defaultPinHash = await bcrypt.hash('1234', 10);
 
           if (!existingUser) {
-            // New Google user gets Customer role and Active status
             const insertRes = await db.collection('users').insertOne({
               name: user.name || 'Google Customer',
               email,
               image: user.image || null,
               role: 'Customer',
               accountType: chosenAccountType,
+              transactionPin: defaultPinHash,
+              twoFactorEnabled: false,
               status: 'Active',
-              createdAt: new Date(),
-              updatedAt: new Date(),
+              createdAt: now,
+              updatedAt: now,
             });
 
             const newUserId = insertRes.insertedId.toString();
@@ -188,11 +207,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               balance: 1000.0,
               status: 'Active',
               ...limits,
-              createdAt: new Date(),
-              updatedAt: new Date(),
+              createdAt: now,
+              updatedAt: now,
+            });
+
+            await db.collection('transactions').insertOne({
+              transactionId:
+                'TXN-' +
+                Math.random().toString(36).substring(2, 10).toUpperCase(),
+              senderAccount: 'SYSTEM',
+              senderName: 'Vaultly Welcome Reserve',
+              senderEmail: 'system@vaultly.bank',
+              receiverAccount: accountNumber,
+              receiverName: user.name || 'Google Customer',
+              receiverEmail: email,
+              type: 'Deposit',
+              amount: 1000.0,
+              fee: 0,
+              status: 'Completed',
+              description: `Welcome Opening Deposit (${chosenAccountType})`,
+              createdAt: now,
+              updatedAt: now,
             });
           } else {
-            // Check if existing user has a bank account
+            if (
+              existingUser.status === 'Blocked' ||
+              existingUser.status === 'Suspended'
+            ) {
+              return false;
+            }
+            if (!existingUser.transactionPin) {
+              await db
+                .collection('users')
+                .updateOne(
+                  { email },
+                  { $set: { transactionPin: defaultPinHash } },
+                );
+            }
+
             const existingAccount = await db
               .collection('bank_accounts')
               .findOne({ userEmail: email });
@@ -208,8 +260,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 balance: 1000.0,
                 status: 'Active',
                 ...limits,
-                createdAt: new Date(),
-                updatedAt: new Date(),
+                createdAt: now,
+                updatedAt: now,
+              });
+
+              await db.collection('transactions').insertOne({
+                transactionId:
+                  'TXN-' +
+                  Math.random().toString(36).substring(2, 10).toUpperCase(),
+                senderAccount: 'SYSTEM',
+                senderName: 'Vaultly Welcome Reserve',
+                senderEmail: 'system@vaultly.bank',
+                receiverAccount: accountNumber,
+                receiverName: existingUser.name || user.name || 'Customer',
+                receiverEmail: email,
+                type: 'Deposit',
+                amount: 1000.0,
+                fee: 0,
+                status: 'Completed',
+                description: `Welcome Opening Deposit (${existingUser.accountType || chosenAccountType})`,
+                createdAt: now,
+                updatedAt: now,
               });
             }
           }
@@ -228,7 +299,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.accountType = user.accountType || 'Savings Account';
       }
 
-      // If token role is missing (e.g., from initial OAuth link), fetch from database
       if (!token.role && token.email) {
         try {
           const db = await getDatabase();
