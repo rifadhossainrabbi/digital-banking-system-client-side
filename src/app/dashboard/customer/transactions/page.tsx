@@ -148,7 +148,7 @@ export default function CustomerTransactionsPage() {
               setPage(1);
             }}
             placeholder="Search by Transaction ID, recipient, or description..."
-            className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] py-2.5 pl-10 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+            className="w-full rounded-2xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-xs text-slate-900 placeholder:text-slate-400 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
           />
         </div>
 

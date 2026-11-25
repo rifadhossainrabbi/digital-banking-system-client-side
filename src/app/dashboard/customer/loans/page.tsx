@@ -374,7 +374,7 @@ export default function CustomerLoansPage() {
                 <select
                   value={loanType}
                   onChange={e => setLoanType(e.target.value)}
-                  className="w-full rounded-xl border border-transparent bg-[#f1f5f9] p-3 text-xs font-semibold text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-xl border border-slate-300 bg-white p-3 text-xs font-semibold text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                 >
                   <option value="Personal Loan">Personal Loan (Quick Cash)</option>
                   <option value="Business Loan">Business Expansion Loan</option>
@@ -397,7 +397,7 @@ export default function CustomerLoansPage() {
                     step="500"
                     value={requestedAmount}
                     onChange={e => setRequestedAmount(e.target.value)}
-                    className="w-full rounded-xl border border-transparent bg-[#f1f5f9] p-3 font-mono font-bold text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-xl border border-slate-300 bg-white p-3 font-mono font-bold text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                   />
                 </div>
 
@@ -408,7 +408,7 @@ export default function CustomerLoansPage() {
                   <select
                     value={durationMonths}
                     onChange={e => setDurationMonths(Number(e.target.value))}
-                    className="w-full rounded-xl border border-transparent bg-[#f1f5f9] p-3 font-semibold text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-xl border border-slate-300 bg-white p-3 font-semibold text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                   >
                     <option value={6}>6 Months</option>
                     <option value={12}>12 Months</option>
@@ -443,7 +443,7 @@ export default function CustomerLoansPage() {
                 <select
                   value={selectedDisburseAccount}
                   onChange={e => setSelectedDisburseAccount(e.target.value)}
-                  className="w-full rounded-xl border border-transparent bg-[#f1f5f9] p-3 font-semibold text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-xl border border-slate-300 bg-white p-3 font-semibold text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                 >
                   {accounts.map((acc: BankAccount) => (
                     <option key={acc.accountNumber} value={acc.accountNumber}>
@@ -464,7 +464,7 @@ export default function CustomerLoansPage() {
                     type="number"
                     value={monthlyIncome}
                     onChange={e => setMonthlyIncome(e.target.value)}
-                    className="w-full rounded-xl border border-transparent bg-[#f1f5f9] p-3 font-mono text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-xl border border-slate-300 bg-white p-3 font-mono text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                   />
                 </div>
 
@@ -475,7 +475,7 @@ export default function CustomerLoansPage() {
                   <select
                     value={employmentStatus}
                     onChange={e => setEmploymentStatus(e.target.value)}
-                    className="w-full rounded-xl border border-transparent bg-[#f1f5f9] p-3 text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                   >
                     <option value="Employed">Full-time Employed</option>
                     <option value="Self-Employed">Self-Employed</option>
@@ -495,7 +495,7 @@ export default function CustomerLoansPage() {
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   placeholder="e.g. Home improvements, business tools"
-                  className="w-full rounded-xl border border-transparent bg-[#f1f5f9] p-3 text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-900 placeholder:text-slate-400 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                 />
               </div>
 
@@ -554,7 +554,7 @@ export default function CustomerLoansPage() {
                 <select
                   value={repayAccount}
                   onChange={e => setRepayAccount(e.target.value)}
-                  className="w-full rounded-xl border border-transparent bg-[#f1f5f9] p-3 text-xs font-semibold text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-xl border border-slate-300 bg-white p-3 text-xs font-semibold text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                 >
                   {accounts.map((acc: BankAccount) => (
                     <option key={acc.accountNumber} value={acc.accountNumber}>
@@ -575,7 +575,7 @@ export default function CustomerLoansPage() {
                   step="0.01"
                   value={repayAmount}
                   onChange={e => setRepayAmount(e.target.value)}
-                  className="w-full rounded-xl border border-transparent bg-[#f1f5f9] p-3 font-mono font-bold text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-xl border border-slate-300 bg-white p-3 font-mono font-bold text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                 />
                 <p className="mt-1 text-[11px] text-slate-400">
                   Remaining Debt: ${repayModalLoan.remainingBalance.toFixed(2)}
@@ -596,7 +596,7 @@ export default function CustomerLoansPage() {
                       setTransactionPin(e.target.value.replace(/\D/g, ''))
                     }
                     placeholder="Enter 4-6 digit PIN (Default: 1234)"
-                    className="w-full rounded-xl border border-transparent bg-[#f1f5f9] py-3 pl-10 pr-4 font-mono text-sm tracking-widest text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-10 pr-4 font-mono text-sm tracking-widest text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                   />
                 </div>
               </div>

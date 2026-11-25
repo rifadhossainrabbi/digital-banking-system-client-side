@@ -197,7 +197,7 @@ export default function CustomerDepositWithdrawPage() {
               id="dw-account"
               value={selectedAccount}
               onChange={e => setSelectedAccount(e.target.value)}
-              className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] p-3.5 text-xs font-semibold text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+              className="w-full rounded-2xl border border-slate-300 bg-white p-3.5 text-xs font-semibold text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
             >
               {accounts.map((acc: BankAccount) => (
                 <option key={acc.accountNumber} value={acc.accountNumber}>
@@ -231,7 +231,7 @@ export default function CustomerDepositWithdrawPage() {
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] py-3.5 pl-9 pr-4 font-mono text-xl font-bold text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-9 pr-4 font-mono text-xl font-bold text-slate-900 placeholder:text-slate-400 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
               />
             </div>
           </div>
@@ -254,7 +254,7 @@ export default function CustomerDepositWithdrawPage() {
                   ? 'e.g. Wire transfer, cash deposit at counter, cheque'
                   : 'e.g. Branch counter withdrawal, urgent personal cash'
               }
-              className="w-full rounded-2xl border border-transparent bg-[#f1f5f9] p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+              className="w-full rounded-2xl border border-slate-300 bg-white p-3.5 text-xs text-slate-900 placeholder:text-slate-400 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
             />
           </div>
 

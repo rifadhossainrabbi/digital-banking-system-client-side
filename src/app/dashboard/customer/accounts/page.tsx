@@ -312,7 +312,7 @@ export default function CustomerAccountsPage() {
                     step="10"
                     value={openingDeposit}
                     onChange={e => setOpeningDeposit(e.target.value)}
-                    className="w-full rounded-xl border border-transparent bg-[#f1f5f9] py-3 pl-8 pr-4 text-sm font-mono text-slate-900 focus:border-slate-300 focus:bg-slate-50 dark:focus:bg-slate-900 focus:outline-hidden dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-8 pr-4 text-sm font-mono text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                   />
                 </div>
                 <p className="mt-1 text-[11px] text-slate-400">

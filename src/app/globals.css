@@ -60,47 +60,88 @@ a[role="button"]:not(:disabled):active,
   border-radius: 5px !important;
 }
 
-/* ===== Global Input / Select / Textarea Theme Fix ===== */
-/* Prevent browser autofill & focus from forcing white background */
-input,
+/* ===== Universal High-Contrast Form Input, Select & Textarea Styling ===== */
+/* Ensures all inputs are clearly visible, bounded, and contrast properly against light & dark backgrounds */
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
 textarea,
 select {
-  background-color: inherit;
-  color: inherit;
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  border-width: 1.5px !important;
+  border-style: solid !important;
+  border-color: #cbd5e1 !important; /* slate-300: clear border in light mode */
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  transition: all 0.2s ease;
 }
 
-/* Light mode focus */
-input:focus,
-textarea:focus,
-select:focus {
-  background-color: #f8fafc;
-  outline: none;
-}
-
-/* Dark mode focus — override browser default white */
-.dark input:focus,
-.dark textarea:focus,
-.dark select:focus {
-  background-color: #1e293b !important;
+/* Dark Mode: Crisp, clearly bounded inputs distinct from dark cards */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.dark textarea,
+.dark select {
+  border-color: #334155 !important; /* slate-700: visible boundary */
+  background-color: #0b1329 !important; /* distinct deep dark field */
   color: #f8fafc !important;
 }
 
-/* Chrome autofill dark mode fix */
+/* Hover state: clear outline enhancement */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):hover,
+textarea:hover,
+select:hover {
+  border-color: #94a3b8 !important; /* slate-400 */
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):hover,
+.dark textarea:hover,
+.dark select:hover {
+  border-color: #64748b !important; /* slate-500 */
+}
+
+/* Focus State: Emerald glowing ring & crisp border */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):focus,
+textarea:focus,
+select:focus {
+  border-color: #10b981 !important; /* emerald-500 */
+  background-color: #ffffff !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: #34d399 !important; /* emerald-400 */
+  background-color: #020617 !important;
+  color: #ffffff !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Placeholder styling with strong readability */
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Chrome/Safari/Edge autofill dark mode fix */
 .dark input:-webkit-autofill,
 .dark input:-webkit-autofill:hover,
 .dark input:-webkit-autofill:focus,
 .dark input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #1e293b inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #0b1329 inset !important;
   -webkit-text-fill-color: #f8fafc !important;
   caret-color: #f8fafc !important;
 }
 
-/* Light mode autofill */
+/* Chrome/Safari/Edge autofill light mode fix */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #f8fafc inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
   -webkit-text-fill-color: #0f172a !important;
 }
