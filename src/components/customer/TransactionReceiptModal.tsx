@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Transaction } from '@/redux/slices/transactionSlice';
 import { generateTransactionReceiptPDF } from '@/utils/pdfGenerator';
+import toast from 'react-hot-toast';
 
 interface ReceiptModalProps {
   transaction: Transaction | null;
@@ -30,6 +31,7 @@ export default function TransactionReceiptModal({
   const handleCopyId = () => {
     navigator.clipboard.writeText(transaction.transactionId);
     setCopied(true);
+    toast.success('Transaction ID copied to clipboard!');
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -210,7 +212,10 @@ export default function TransactionReceiptModal({
           </button>
           <button
             type="button"
-            onClick={() => generateTransactionReceiptPDF(transaction)}
+            onClick={() => {
+              generateTransactionReceiptPDF(transaction);
+              toast.success('Official PDF receipt downloaded!');
+            }}
             className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
           >
             <Download className="h-3.5 w-3.5" />

@@ -17,6 +17,7 @@ import {
   DepositWithdrawRequest,
 } from '@/redux/slices/transactionSlice';
 import { fetchAccounts, BankAccount } from '@/redux/slices/accountSlice';
+import toast from 'react-hot-toast';
 
 export default function CustomerDepositWithdrawPage() {
   const dispatch = useAppDispatch();
@@ -49,26 +50,23 @@ export default function CustomerDepositWithdrawPage() {
 
     const numAmount = Number(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
-      setFeedback({
-        type: 'error',
-        message: 'Please enter a valid amount greater than $0.',
-      });
+      const msg = 'Please enter a valid amount greater than $0.';
+      setFeedback({ type: 'error', message: msg });
+      toast.error(msg);
       return;
     }
 
     if (!selectedAccount) {
-      setFeedback({
-        type: 'error',
-        message: 'Please select a bank account.',
-      });
+      const msg = 'Please select a bank account.';
+      setFeedback({ type: 'error', message: msg });
+      toast.error(msg);
       return;
     }
 
     if (activeTab === 'Withdrawal' && currentAcc && numAmount > currentAcc.balance) {
-      setFeedback({
-        type: 'error',
-        message: `Insufficient balance for withdrawal. Available: $${currentAcc.balance.toFixed(2)}`,
-      });
+      const msg = `Insufficient balance for withdrawal. Available: $${currentAcc.balance.toFixed(2)}`;
+      setFeedback({ type: 'error', message: msg });
+      toast.error(msg);
       return;
     }
 
@@ -82,23 +80,28 @@ export default function CustomerDepositWithdrawPage() {
         })
       ).unwrap();
 
+      const successMsg =
+        result.message || `${activeTab} request submitted successfully.`;
       setFeedback({
         type: 'success',
-        message: result.message || `${activeTab} processed successfully.`,
+        message: successMsg,
       });
+      toast.success(successMsg);
 
       setAmount('');
       setDescription('');
       dispatch(fetchAccounts());
       dispatch(fetchDepositWithdrawRequests(selectedAccount));
     } catch (err: unknown) {
+      const errMsg =
+        typeof err === 'string'
+          ? err
+          : `Failed to submit ${activeTab.toLowerCase()} request.`;
       setFeedback({
         type: 'error',
-        message:
-          typeof err === 'string'
-            ? err
-            : `Failed to submit ${activeTab.toLowerCase()} request.`,
+        message: errMsg,
       });
+      toast.error(errMsg);
     }
   };
 

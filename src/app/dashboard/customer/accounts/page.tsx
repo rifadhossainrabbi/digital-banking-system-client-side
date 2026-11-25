@@ -18,6 +18,7 @@ import {
   BankAccount,
 } from '@/redux/slices/accountSlice';
 import { generateAccountStatementPDF } from '@/utils/pdfGenerator';
+import toast from 'react-hot-toast';
 
 export default function CustomerAccountsPage() {
   const dispatch = useAppDispatch();
@@ -58,8 +59,10 @@ export default function CustomerAccountsPage() {
         },
         txns
       );
+      toast.success('Account statement PDF downloaded successfully!');
     } catch (err) {
       console.error('Failed to download statement PDF:', err);
+      toast.error('Failed to generate statement PDF.');
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -73,6 +76,7 @@ export default function CustomerAccountsPage() {
     const depositNum = Number(openingDeposit);
     if (isNaN(depositNum) || depositNum < 50) {
       setFormError('Opening deposit must be at least $50.00.');
+      toast.error('Opening deposit must be at least $50.00.');
       return;
     }
 
@@ -87,12 +91,16 @@ export default function CustomerAccountsPage() {
       setSuccessNotice(
         `Your new ${result.accountType} (${result.accountNumber}) has been provisioned successfully!`
       );
+      toast.success(
+        `Your new ${result.accountType} (${result.accountNumber}) has been provisioned!`
+      );
       setIsModalOpen(false);
       setTimeout(() => setSuccessNotice(null), 5000);
     } catch (err: unknown) {
-      setFormError(
-        typeof err === 'string' ? err : 'Failed to create account.'
-      );
+      const msg =
+        typeof err === 'string' ? err : 'Failed to create account.';
+      setFormError(msg);
+      toast.error(msg);
     }
   };
 

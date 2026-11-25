@@ -6,6 +6,7 @@ import AuthProvider from '@/components/AuthProvider';
 import ReduxProvider from '@/redux/ReduxProvider';
 import Navbar from '@/components/home/Navbar';
 import Footer from '@/components/home/Footer';
+import { Toaster } from 'react-hot-toast';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -38,6 +39,17 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <ReduxProvider>
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  className:
+                    'dark:bg-slate-900 dark:text-white dark:border-slate-800 border border-slate-200 text-xs font-semibold shadow-xl rounded-2xl p-3',
+                  duration: 4000,
+                  style: {
+                    borderRadius: '16px',
+                  },
+                }}
+              />
               <Navbar />
               <main className="flex-grow w-full">{children}</main>
               <Footer />

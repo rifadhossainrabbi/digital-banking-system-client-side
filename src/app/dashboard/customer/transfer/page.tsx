@@ -14,6 +14,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { executeFundTransfer, Transaction } from '@/redux/slices/transactionSlice';
 import { fetchAccounts, BankAccount } from '@/redux/slices/accountSlice';
 import TransactionReceiptModal from '@/components/customer/TransactionReceiptModal';
+import toast from 'react-hot-toast';
 
 export default function CustomerTransferPage() {
   const dispatch = useAppDispatch();
@@ -84,6 +85,9 @@ export default function CustomerTransferPage() {
       ).unwrap();
 
       setCompletedTxn(result.transaction);
+      toast.success(
+        `Transferred $${transferAmt.toFixed(2)} to ${recipientAccount.trim()} successfully!`
+      );
       // Refresh account balances
       dispatch(fetchAccounts());
       // Reset form
@@ -94,7 +98,12 @@ export default function CustomerTransferPage() {
         setRecipientAccount('');
       }
     } catch (err: unknown) {
-      setError(typeof err === 'string' ? err : 'Transfer failed. Please check details.');
+      const msg =
+        typeof err === 'string'
+          ? err
+          : 'Transfer failed. Please check details.';
+      setError(msg);
+      toast.error(msg);
     }
   };
 

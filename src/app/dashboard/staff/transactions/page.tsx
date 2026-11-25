@@ -18,6 +18,7 @@ import {
   Download,
 } from 'lucide-react';
 import { generateTransactionReceiptPDF } from '@/utils/pdfGenerator';
+import toast from 'react-hot-toast';
 import {
   getStaffTransactionsAction,
   flagSuspiciousTransactionAction,
@@ -97,13 +98,18 @@ export default function StaffTransactionsPage() {
       );
       if (res.success) {
         setFlagSuccess(res.message || 'Transaction flagged successfully.');
+        toast.success(res.message || 'Transaction flagged for Admin review.');
         loadTransactions();
         setTimeout(() => setFlagModalOpen(false), 1500);
       } else {
-        setFlagError(res.error || 'Failed to flag transaction.');
+        const err = res.error || 'Failed to flag transaction.';
+        setFlagError(err);
+        toast.error(err);
       }
     } catch (err: any) {
-      setFlagError(err.message || 'An unexpected error occurred.');
+      const msg = err.message || 'An unexpected error occurred.';
+      setFlagError(msg);
+      toast.error(msg);
     } finally {
       setFlagSubmitting(false);
     }
@@ -578,7 +584,10 @@ export default function StaffTransactionsPage() {
                 Close
               </button>
               <button
-                onClick={() => generateTransactionReceiptPDF(receiptTxn)}
+                onClick={() => {
+                  generateTransactionReceiptPDF(receiptTxn);
+                  toast.success('Official PDF receipt downloaded!');
+                }}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
               >
                 <Download className="h-3.5 w-3.5" />

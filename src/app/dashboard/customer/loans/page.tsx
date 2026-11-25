@@ -16,6 +16,7 @@ import {
   Loan,
 } from '@/redux/slices/loanSlice';
 import { fetchAccounts, BankAccount } from '@/redux/slices/accountSlice';
+import toast from 'react-hot-toast';
 
 export default function CustomerLoansPage() {
   const dispatch = useAppDispatch();
@@ -95,9 +96,15 @@ export default function CustomerLoansPage() {
       ).unwrap();
 
       setIsApplyModalOpen(false);
+      toast.success(
+        `Loan application for $${principal.toLocaleString()} submitted for review!`
+      );
       dispatch(fetchAccounts());
     } catch (err: unknown) {
-      setApplyError(typeof err === 'string' ? err : 'Loan application failed.');
+      const msg =
+        typeof err === 'string' ? err : 'Loan application failed.';
+      setApplyError(msg);
+      toast.error(msg);
     }
   };
 
@@ -109,12 +116,17 @@ export default function CustomerLoansPage() {
 
     const payAmt = Number(repayAmount);
     if (isNaN(payAmt) || payAmt <= 0) {
-      setRepayError('Please enter a valid repayment amount.');
+      const msg = 'Please enter a valid repayment amount.';
+      setRepayError(msg);
+      toast.error(msg);
       return;
     }
 
     if (!transactionPin || transactionPin.length < 4) {
-      setRepayError('Please enter your 4-6 digit Transaction PIN (Default: 1234).');
+      const msg =
+        'Please enter your 4-6 digit Transaction PIN (Default: 1234).';
+      setRepayError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -128,12 +140,17 @@ export default function CustomerLoansPage() {
         })
       ).unwrap();
 
+      toast.success(
+        `Repayment of $${payAmt.toFixed(2)} completed successfully!`
+      );
       setRepayModalLoan(null);
       setRepayAmount('');
       setTransactionPin('');
       dispatch(fetchAccounts());
     } catch (err: unknown) {
-      setRepayError(typeof err === 'string' ? err : 'Repayment failed.');
+      const msg = typeof err === 'string' ? err : 'Repayment failed.';
+      setRepayError(msg);
+      toast.error(msg);
     }
   };
 

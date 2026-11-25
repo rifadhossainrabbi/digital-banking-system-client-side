@@ -12,6 +12,7 @@ import {
   Shield,
   MessageSquare,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function ContactPage() {
   const [form, setForm] = useState({
@@ -26,6 +27,7 @@ export default function ContactPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
+    toast.success('Thank you! Your message has been sent to our banking desk.');
     setTimeout(() => {
       setSubmitted(false);
       setForm({ name: '', email: '', category: 'General Inquiry', subject: '', message: '' });
